@@ -18,9 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ourspace.app.data.model.UserProfile
-import java.text.SimpleDateFormat
-import java.util.Locale
-import java.util.TimeZone
+import com.ourspace.app.data.util.DateUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -144,7 +142,7 @@ fun NotesScreen(
                                     fontSize = 14.sp
                                 )
                                 Text(
-                                    text = formatTime(note.createdAt),
+                                    text = DateUtils.formatTime(note.createdAt),
                                     color = if (isMe) Color(0xFFFFE4E6) else Color(0xFF94A3B8),
                                     fontSize = 10.sp,
                                     modifier = Modifier.align(Alignment.End).padding(top = 4.dp)
@@ -159,14 +157,7 @@ fun NotesScreen(
     }
 }
 
-private fun formatTime(isoString: String): String {
-    return try {
-        val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
-        parser.timeZone = TimeZone.getTimeZone("UTC")
-        val date = parser.parse(isoString) ?: return ""
-        val formatter = SimpleDateFormat("hh:mm a", Locale.getDefault())
-        formatter.format(date)
-    } catch (e: Exception) {
-        ""
-    }
+     }
 }
+
+// Local formatTime removed in favor of DateUtils

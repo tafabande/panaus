@@ -22,9 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ourspace.app.data.model.UserProfile
-import java.text.SimpleDateFormat
-import java.util.Locale
-import java.util.TimeZone
+import com.ourspace.app.data.util.DateUtils
 
 val REQUEST_TYPES = listOf(
     "Call me",
@@ -234,7 +232,7 @@ fun AsksScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(text = "\"${ask.requestText}\"", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = Color(0xFF1E293B))
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = formatTime(ask.createdAt), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFF94A3B8), letterSpacing = 1.sp)
+                        Text(text = DateUtils.formatDateTime(ask.createdAt), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFF94A3B8), letterSpacing = 1.sp)
 
                         if (isPending) {
                             Spacer(modifier = Modifier.height(16.dp))
@@ -277,14 +275,7 @@ fun ActionBtn(text: String, textColor: Color, bgColor: Color, onClick: () -> Uni
     }
 }
 
-private fun formatTime(isoString: String): String {
-    return try {
-        val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
-        parser.timeZone = TimeZone.getTimeZone("UTC")
-        val date = parser.parse(isoString) ?: return ""
-        val formatter = SimpleDateFormat("MMM d, hh:mm a", Locale.getDefault())
-        formatter.format(date)
-    } catch (e: Exception) {
-        ""
-    }
+     }
 }
+
+// Local formatTime removed

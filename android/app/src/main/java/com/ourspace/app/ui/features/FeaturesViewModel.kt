@@ -5,15 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.ourspace.app.data.model.*
 import com.ourspace.app.data.repository.FeaturesRepository
+import com.ourspace.app.data.util.DateUtils
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
 
 class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRepository()) : ViewModel() {
     
@@ -76,7 +69,7 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
                 senderId = senderId,
                 receiverId = receiverId,
                 content = content.trim(),
-                createdAt = getCurrentIsoTime()
+                createdAt = DateUtils.getCurrentIsoTime()
             )
             repository.sendNote(note)
         }
@@ -91,7 +84,7 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
                 assignedTo = assignedTo,
                 isCompleted = false,
                 createdBy = creatorId,
-                createdAt = getCurrentIsoTime(),
+                createdAt = DateUtils.getCurrentIsoTime(),
                 completedAt = null
             )
             repository.addTodo(todo)
@@ -100,7 +93,7 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
 
     fun toggleTodo(todo: TodoItem) {
         viewModelScope.launch {
-            val completedAt = if (!todo.isCompleted) getCurrentIsoTime() else null
+            val completedAt = if (!todo.isCompleted) DateUtils.getCurrentIsoTime() else null
             repository.toggleTodo(todo.id, !todo.isCompleted, completedAt)
         }
     }
@@ -121,7 +114,7 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
                 time = time,
                 category = category,
                 createdBy = creatorId,
-                createdAt = getCurrentIsoTime()
+                createdAt = DateUtils.getCurrentIsoTime()
             )
             repository.addEvent(event)
         }
@@ -135,7 +128,7 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
                 moodValue = moodValue,
                 emoji = emoji,
                 note = note.trim(),
-                createdAt = getCurrentIsoTime()
+                createdAt = DateUtils.getCurrentIsoTime()
             )
             repository.addMood(mood)
         }
@@ -152,7 +145,7 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
                 requestType = type,
                 status = "pending",
                 responseText = "",
-                createdAt = getCurrentIsoTime(),
+                createdAt = DateUtils.getCurrentIsoTime(),
                 respondedAt = null
             )
             repository.addAsk(ask)
@@ -161,13 +154,9 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
 
     fun updateAskStatus(askId: String, status: String) {
         viewModelScope.launch {
-            repository.updateAskStatus(askId, status, getCurrentIsoTime())
+            repository.updateAskStatus(askId, status, DateUtils.getCurrentIsoTime())
         }
     }
 
-    private fun getCurrentIsoTime(): String {
-        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
-        format.timeZone = TimeZone.getTimeZone("UTC")
-        return format.format(Date())
-    }
+    // Removed local getCurrentIsoTime in favor of DateUtils
 }

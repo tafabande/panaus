@@ -2,14 +2,8 @@ package com.ourspace.app.data.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ourspace.app.data.model.UserProfile
+import com.ourspace.app.data.util.DateUtils
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.tasks.await
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
 
 class UserRepository {
     private val db = FirebaseFirestore.getInstance()
@@ -50,15 +44,11 @@ class UserRepository {
 
             val coupleId = listOf(currentUserId, partnerCode).sorted().joinToString("_")
 
-            val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
-            dateFormat.timeZone = TimeZone.getTimeZone("UTC")
-            val createdAt = dateFormat.format(Date())
-
             val coupleData = hashMapOf(
                 "coupleId" to coupleId,
                 "user1Id" to currentUserId,
                 "user2Id" to partnerCode,
-                "createdAt" to createdAt
+                "createdAt" to DateUtils.getCurrentIsoTime()
             )
 
             // Execute all writes

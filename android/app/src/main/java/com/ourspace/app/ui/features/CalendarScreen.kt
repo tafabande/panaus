@@ -17,8 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ourspace.app.data.model.UserProfile
-import java.text.SimpleDateFormat
-import java.util.Locale
+import com.ourspace.app.data.util.DateUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -159,7 +158,7 @@ fun CalendarScreen(
             }
 
             items(events) { event ->
-                val (monthStr, dayStr) = formatMonthDay(event.date)
+                val (monthStr, dayStr) = DateUtils.formatMonthDay(event.date)
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -201,14 +200,7 @@ fun CalendarScreen(
     }
 }
 
-private fun formatMonthDay(dateString: String): Pair<String, String> {
-    return try {
-        val parser = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-        val date = parser.parse(dateString) ?: return "M" to "D"
-        val monthFormatter = SimpleDateFormat("MMM", Locale.US)
-        val dayFormatter = SimpleDateFormat("dd", Locale.US)
-        monthFormatter.format(date).uppercase() to dayFormatter.format(date)
-    } catch (e: Exception) {
-        "M" to "D"
-    }
+     }
 }
+
+// Local formatMonthDay removed

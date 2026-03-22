@@ -20,9 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ourspace.app.data.model.UserProfile
-import java.text.SimpleDateFormat
-import java.util.Locale
-import java.util.TimeZone
+import com.ourspace.app.data.util.DateUtils
 
 data class MoodOption(val value: Int, val emoji: String, val label: String)
 
@@ -180,7 +178,7 @@ fun MoodScreen(
                                         color = Color(0xFF1E293B)
                                     )
                                     Text(
-                                        text = formatTime(mood.createdAt),
+                                        text = DateUtils.formatDateTime(mood.createdAt),
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF94A3B8)
@@ -205,14 +203,7 @@ fun MoodScreen(
     }
 }
 
-private fun formatTime(isoString: String): String {
-    return try {
-        val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
-        parser.timeZone = TimeZone.getTimeZone("UTC")
-        val date = parser.parse(isoString) ?: return ""
-        val formatter = SimpleDateFormat("MMM d, hh:mm a", Locale.getDefault())
-        formatter.format(date)
-    } catch (e: Exception) {
-        ""
-    }
+     }
 }
+
+// Local formatTime removed
