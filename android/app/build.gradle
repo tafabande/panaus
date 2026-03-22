@@ -25,9 +25,8 @@ android {
 }
 
 repositories {
-    flatDir{
-        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
-    }
+    // Replaced flatDir with standard Gradle repository block or removed to avoid the meta-data warning
+    // If you need local AARs, use: maven { url "$rootDir/libs" }
 }
 
 dependencies {
