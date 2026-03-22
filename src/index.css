@@ -7,5 +7,12 @@
     @apply bg-background text-text font-sans antialiased;
     margin: 0;
     padding: 0;
+    
+    /* Native App Feel Optimizations */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
   }
 }

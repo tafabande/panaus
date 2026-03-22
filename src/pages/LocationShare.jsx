@@ -59,12 +59,28 @@ export default function LocationShare() {
   const shareLocation = async () => {
     setLoading(true);
     try {
-      const state = await Geolocation.checkPermissions();
-      if (state.location !== 'granted') {
-         await Geolocation.requestPermissions();
+      // 1. Check Native Plugin Permissions
+      let permStatus = { location: 'prompt' };
+      try {
+        permStatus = await Geolocation.checkPermissions();
+      } catch (e) {
+        // Ignored, means we are not on native or plugin not fully loaded
       }
 
-      const coordinates = await Geolocation.getCurrentPosition();
+      if (permStatus.location === 'prompt' || permStatus.location === 'prompt-with-rationale') {
+        try {
+          permStatus = await Geolocation.requestPermissions();
+        } catch (e) {
+          throw new Error('Could not request location permissions natively.');
+        }
+      }
+
+      if (permStatus.location === 'denied') {
+        throw new Error('Location permission denied. Please enable in device settings.');
+      }
+
+      // 2. Get coords
+      const coordinates = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
       
       await addDoc(collection(db, 'locationShares'), {
         coupleId: userData.coupleId,
@@ -76,21 +92,26 @@ export default function LocationShare() {
       });
       
     } catch (err) {
-      console.error('Error getting location', err);
-      // Fallback if Capacitor fails (e.g., in standard web browser without HTTPS)
+      console.warn('Native geolocation failed, trying web fallback:', err);
+      
+      // Fallback if Capacitor fails (e.g., in standard web browser without HTTPS or missing plugin bridge)
       if (navigator.geolocation) {
          navigator.geolocation.getCurrentPosition(async (pos) => {
-            await addDoc(collection(db, 'locationShares'), {
-              coupleId: userData.coupleId,
-              userId: currentUser.uid,
-              latitude: pos.coords.latitude,
-              longitude: pos.coords.longitude,
-              accuracy: pos.coords.accuracy,
-              createdAt: new Date().toISOString()
-            });
-         }, (err) => alert('Could not get location. Enable permissions.'));
+            try {
+              await addDoc(collection(db, 'locationShares'), {
+                coupleId: userData.coupleId,
+                userId: currentUser.uid,
+                latitude: pos.coords.latitude,
+                longitude: pos.coords.longitude,
+                accuracy: pos.coords.accuracy,
+                createdAt: new Date().toISOString()
+              });
+            } catch (dbErr) {
+              alert('Location found, but could not save (offline?). ' + dbErr.message);
+            }
+         }, (err) => alert('Could not get location: ' + err.message));
       } else {
-         alert('Geolocation is not supported by your browser or device.');
+         alert(err.message || 'Geolocation is not supported by your device.');
       }
     } finally {
       setLoading(false);
