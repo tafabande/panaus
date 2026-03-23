@@ -4,6 +4,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.ourspace.app.data.model.UserProfile
 import com.ourspace.app.data.util.DateUtils
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.tasks.await
 
 class UserRepository {
     private val db = FirebaseFirestore.getInstance()

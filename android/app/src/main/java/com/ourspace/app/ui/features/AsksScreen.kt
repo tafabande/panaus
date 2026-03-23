@@ -10,11 +10,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -126,7 +128,7 @@ fun AsksScreen(
                                     placeholder = { Text("e.g. Please pick up the dry cleaning") },
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(12.dp),
-                                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                                    colors = OutlinedTextFieldDefaults.colors(
                                         focusedBorderColor = Color(0xFFF43F5E),
                                         unfocusedBorderColor = Color(0xFFFFE4E6)
                                     )
@@ -218,7 +220,7 @@ fun AsksScreen(
                                         imageVector = when(ask.status) {
                                             "accepted" -> Icons.Filled.CheckCircle
                                             "declined" -> Icons.Filled.Cancel
-                                            else -> Icons.Filled.Schedule
+                                            else -> Icons.Filled.DateRange
                                         },
                                         contentDescription = ask.status,
                                         tint = statusColor,
@@ -273,9 +275,6 @@ fun ActionBtn(text: String, textColor: Color, bgColor: Color, onClick: () -> Uni
     ) {
         Text(text, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = textColor)
     }
-}
-
-     }
 }
 
 // Local formatTime removed
