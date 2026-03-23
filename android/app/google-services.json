@@ -1,36 +1,26 @@
 {
   "project_info": {
-    "project_number": "374714245828",
-    "project_id": "two-lovers-os",
-    "storage_bucket": "two-lovers-os.firebasestorage.app"
+    "project_number": "696531395092",
+    "project_id": "our-space-f5ea6",
+    "storage_bucket": "our-space-f5ea6.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:374714245828:android:192c38750284c5dbe95f91",
+        "mobilesdk_app_id": "1:696531395092:android:4b0a901a42c51665ba7d01",
         "android_client_info": {
-          "package_name": "com.ourspace.app"
+          "package_name": "our.space"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "374714245828-jta528pmv6ejjrl7nd0q04chqitkahgb.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBziVrnWuVtB0vy-DHpjqd7A84by2zTTTY"
+          "current_key": "AIzaSyAziug7pIhdWFJbWcrk6Ewe5ePIgTDqryI"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "374714245828-jta528pmv6ejjrl7nd0q04chqitkahgb.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }
