@@ -103,7 +103,7 @@ fun MoodScreen(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(16.dp),
                             minLines = 3,
-                            colors = TextFieldDefaults.outlinedTextFieldColors(
+                            colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = Color(0xFFF43F5E),
                                 unfocusedBorderColor = Color(0xFFFFE4E6)
                             )
@@ -203,7 +203,5 @@ fun MoodScreen(
     }
 }
 
-     }
-}
 
 // Local formatTime removed

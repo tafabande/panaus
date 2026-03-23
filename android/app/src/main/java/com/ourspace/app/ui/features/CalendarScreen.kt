@@ -200,7 +200,5 @@ fun CalendarScreen(
     }
 }
 
-     }
-}
 
 // Local formatMonthDay removed

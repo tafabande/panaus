@@ -165,7 +165,7 @@ fun PairingScreen(
                     label = { Text("Partner's Code") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                    colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFFF43F5E),
                         unfocusedBorderColor = Color(0xFFFFE4E6)
                     )

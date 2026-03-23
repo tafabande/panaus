@@ -86,7 +86,7 @@ fun RegisterScreen(
                     label = { Text("Your Name") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                    colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFFF43F5E),
                         unfocusedBorderColor = Color(0xFFFFE4E6)
                     )
@@ -100,7 +100,7 @@ fun RegisterScreen(
                     label = { Text("Email") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                    colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFFF43F5E),
                         unfocusedBorderColor = Color(0xFFFFE4E6)
                     )
@@ -115,7 +115,7 @@ fun RegisterScreen(
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                    colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFFF43F5E),
                         unfocusedBorderColor = Color(0xFFFFE4E6)
                     )

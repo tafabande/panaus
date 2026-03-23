@@ -65,7 +65,7 @@ fun NotesScreen(
                         modifier = Modifier.weight(1f),
                         placeholder = { Text("Write a note...") },
                         shape = RoundedCornerShape(24.dp),
-                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                        colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFFF43F5E),
                             unfocusedBorderColor = Color(0xFFFFE4E6)
                         )
@@ -157,7 +157,5 @@ fun NotesScreen(
     }
 }
 
-     }
-}
 
 // Local formatTime removed in favor of DateUtils
