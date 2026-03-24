@@ -14,6 +14,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.ui.draw.clip
@@ -27,8 +29,12 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit,
     viewModel: AuthViewModel = viewModel()
 ) {
-    var email by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    val sharedPrefs = remember { context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE) }
+    
+    var email by remember { mutableStateOf(sharedPrefs.getString("saved_email", "") ?: "") }
     var password by remember { mutableStateOf("") }
+    var rememberMe by remember { mutableStateOf(sharedPrefs.getBoolean("remember_me", false)) }
     val authState by viewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
@@ -119,10 +125,31 @@ fun LoginScreen(
                     )
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().clickable { rememberMe = !rememberMe },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = rememberMe,
+                        onCheckedChange = { rememberMe = it },
+                        colors = CheckboxDefaults.colors(checkedColor = Color(0xFFF43F5E))
+                    )
+                    Text(text = "Remember me", color = Color(0xFF64748B), fontSize = 14.sp)
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
-                    onClick = { viewModel.login(email, password) },
+                    onClick = { 
+                        if (rememberMe) {
+                            sharedPrefs.edit().putString("saved_email", email).putBoolean("remember_me", true).apply()
+                        } else {
+                            sharedPrefs.edit().remove("saved_email").putBoolean("remember_me", false).apply()
+                        }
+                        viewModel.login(email, password) 
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
