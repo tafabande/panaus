@@ -1,5 +1,8 @@
 name: Android Build
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: [ "master", "main" ]
@@ -60,3 +63,16 @@ jobs:
       with:
         name: app-debug
         path: android/app/build/outputs/apk/debug/app-debug.apk
+
+    - name: Create Release
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: build-${{ github.run_number }}
+        name: Auto-Build Release #${{ github.run_number }}
+        body: "Automated build triggered by push to master. \nCommit: ${{ github.sha }}"
+        files: android/app/build/outputs/apk/debug/app-debug.apk
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
