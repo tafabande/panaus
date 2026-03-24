@@ -25,6 +25,7 @@ import com.ourspace.app.R
 @Composable
 fun DashboardScreen(
     onLogout: () -> Unit,
+    onNavigateToPairing: () -> Unit,
     onNavigateToNotes: () -> Unit,
     onNavigateToTodos: () -> Unit,
     onNavigateToCalendar: () -> Unit,
@@ -84,6 +85,40 @@ fun DashboardScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp)
             ) {
                 Text("Sign Out", color = Color(0xFFE11D48), fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            }
+        }
+
+        if (userProfile?.coupleId == null) {
+            Card(
+                onClick = onNavigateToPairing,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF1F2)),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "You're flying solo! ✈️",
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFE11D48),
+                            fontSize = 16.sp
+                        )
+                        Text(
+                            text = "Pair with your partner to unlock all shared features.",
+                            color = Color(0xFFE11D48),
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                    Button(
+                        onClick = onNavigateToPairing,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE11D48)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Pair Now")
+                    }
+                }
             }
         }
 

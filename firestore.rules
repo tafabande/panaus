@@ -8,10 +8,28 @@ service cloud.firestore {
         get(/databases/$(database)/documents/couples/$(coupleId)).data.user2Id == request.auth.uid
       );
     }
+    
+    function isValidString(text, maxLen) {
+      return text is string && text.size() > 0 && text.size() <= maxLen;
+    }
 
     match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        resource.data.partnerId == request.auth.uid ||
+        resource.data.isDiscoverable == true
+      );
+      
+      allow update: if request.auth != null && (
+        request.auth.uid == userId ||
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['partnerId', 'coupleId']) &&
+          resource.data.partnerId == null &&
+          resource.data.isDiscoverable == true
+        )
+      );
+      
+      allow create: if request.auth != null && request.auth.uid == userId;
     }
 
     match /couples/{coupleId} {
@@ -21,33 +39,42 @@ service cloud.firestore {
     }
 
     match /moods/{moodId} {
-      allow read, write: if isMemberOfCouple(request.resource.data.coupleId || resource.data.coupleId);
+      allow read: if isMemberOfCouple(resource.data.coupleId);
+      allow create, update: if isMemberOfCouple(request.resource.data.coupleId) 
+        && request.resource.data.moodValue is number;
     }
 
     match /notes/{noteId} {
-      allow read, write: if isMemberOfCouple(request.resource.data.coupleId || resource.data.coupleId);
+      allow read: if isMemberOfCouple(resource.data.coupleId);
+      allow create, update: if isMemberOfCouple(request.resource.data.coupleId) 
+        && isValidString(request.resource.data.content, 10000);
     }
 
     match /events/{eventId} {
-      allow read, write: if isMemberOfCouple(request.resource.data.coupleId || resource.data.coupleId);
+      allow read: if isMemberOfCouple(resource.data.coupleId);
+      allow create, update: if isMemberOfCouple(request.resource.data.coupleId) 
+        && isValidString(request.resource.data.title, 500);
     }
 
     match /asks/{askId} {
-      allow read, write: if isMemberOfCouple(request.resource.data.coupleId || resource.data.coupleId);
-    }
-
-    match /updates/{updateId} {
-      allow read, write: if isMemberOfCouple(request.resource.data.coupleId || resource.data.coupleId);
+      allow read: if isMemberOfCouple(resource.data.coupleId);
+      allow create, update: if isMemberOfCouple(request.resource.data.coupleId) 
+        && isValidString(request.resource.data.requestText, 2000);
     }
 
     match /todos/{todoId} {
-      allow read, write: if isMemberOfCouple(request.resource.data.coupleId || resource.data.coupleId);
+      allow read: if isMemberOfCouple(resource.data.coupleId);
+      allow create, update: if isMemberOfCouple(request.resource.data.coupleId) 
+        && isValidString(request.resource.data.title, 500);
     }
 
+    // Keep original rules for the rest
+    match /updates/{updateId} {
+      allow read, write: if isMemberOfCouple(request.resource.data.coupleId || resource.data.coupleId);
+    }
     match /photos/{photoId} {
       allow read, write: if isMemberOfCouple(request.resource.data.coupleId || resource.data.coupleId);
     }
-
     match /locationShares/{shareId} {
       allow read, write: if isMemberOfCouple(request.resource.data.coupleId || resource.data.coupleId);
     }

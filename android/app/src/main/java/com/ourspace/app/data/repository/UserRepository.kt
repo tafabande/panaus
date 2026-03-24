@@ -69,6 +69,18 @@ class UserRepository {
 
             Result.success(Unit)
         } catch (e: Exception) {
+            if (e is com.google.firebase.firestore.FirebaseFirestoreException && e.code == com.google.firebase.firestore.FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                 return Result.failure(Exception("User not found, or they have disabled discoverability."))
+            }
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateDiscoverability(userId: String, isDiscoverable: Boolean): Result<Unit> {
+        return try {
+            db.collection("users").document(userId).update("isDiscoverable", isDiscoverable).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
             Result.failure(e)
         }
     }

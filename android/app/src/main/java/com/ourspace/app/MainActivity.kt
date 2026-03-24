@@ -39,6 +39,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val userViewModel: UserViewModel = viewModel()
             val userProfile by userViewModel.userProfile.collectAsState()
+            val hasSkippedPairing by userViewModel.hasSkippedPairing.collectAsState()
             
             val featuresViewModel: FeaturesViewModel = viewModel()
 
@@ -82,7 +83,7 @@ class MainActivity : ComponentActivity() {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 Text("Loading Data...")
                             }
-                        } else if (userProfile?.coupleId == null) {
+                        } else if (userProfile?.coupleId == null && !hasSkippedPairing) {
                             PairingScreen(
                                 onLogout = {
                                     navController.navigate("login") {
@@ -92,6 +93,7 @@ class MainActivity : ComponentActivity() {
                                 onPaired = {
                                     // Automatic recomposition will show dashboard
                                 },
+                                onSkip = { userViewModel.skipPairing() },
                                 viewModel = userViewModel
                             )
                         } else {
@@ -101,6 +103,7 @@ class MainActivity : ComponentActivity() {
                                         popUpTo("main_flow") { inclusive = true }
                                     }
                                 },
+                                onNavigateToPairing = { navController.navigate("pairing") },
                                 onNavigateToNotes = { navController.navigate("notes") },
                                 onNavigateToTodos = { navController.navigate("todos") },
                                 onNavigateToCalendar = { navController.navigate("calendar") },
@@ -111,6 +114,15 @@ class MainActivity : ComponentActivity() {
                                 featuresViewModel = featuresViewModel
                             )
                         }
+                    }
+
+                    composable("pairing") {
+                        PairingScreen(
+                            onLogout = { navController.navigate("login") { popUpTo("main_flow") { inclusive = true } } },
+                            onPaired = { navController.popBackStack() },
+                            onSkip = { navController.popBackStack() },
+                            viewModel = userViewModel
+                        )
                     }
                     
                     composable("notes") {

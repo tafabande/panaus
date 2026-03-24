@@ -6,5 +6,6 @@ data class UserProfile(
     val email: String = "",
     val partnerId: String? = null,
     val coupleId: String? = null,
-    val createdAt: String = ""
+    val createdAt: String = "",
+    val isDiscoverable: Boolean = false
 )

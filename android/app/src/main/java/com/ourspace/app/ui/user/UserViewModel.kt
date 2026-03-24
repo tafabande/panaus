@@ -25,6 +25,9 @@ class UserViewModel(private val repository: UserRepository = UserRepository()) :
     private val _pairingState = MutableStateFlow<PairingState>(PairingState.Idle)
     val pairingState: StateFlow<PairingState> = _pairingState.asStateFlow()
 
+    private val _hasSkippedPairing = MutableStateFlow(false)
+    val hasSkippedPairing: StateFlow<Boolean> = _hasSkippedPairing.asStateFlow()
+
     init {
         observeUser()
     }
@@ -54,6 +57,17 @@ class UserViewModel(private val repository: UserRepository = UserRepository()) :
         }
     }
     
+    fun setDiscoverability(isDiscoverable: Boolean) {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        viewModelScope.launch {
+            repository.updateDiscoverability(currentUserId, isDiscoverable)
+        }
+    }
+
+    fun skipPairing() {
+        _hasSkippedPairing.value = true
+    }
+
     fun resetPairingState() {
         _pairingState.value = PairingState.Idle
     }

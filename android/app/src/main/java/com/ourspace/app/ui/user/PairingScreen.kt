@@ -24,6 +24,7 @@ import kotlinx.coroutines.delay
 fun PairingScreen(
     onLogout: () -> Unit,
     onPaired: () -> Unit,
+    onSkip: (() -> Unit)? = null,
     viewModel: UserViewModel = viewModel()
 ) {
     val userProfile by viewModel.userProfile.collectAsState()
@@ -155,6 +156,36 @@ fun PairingScreen(
                             copied = false
                         }
                     }
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Discoverability Toggle
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Discoverable",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF1E293B)
+                        )
+                        Text(
+                            text = "Allow partners to pair with your code",
+                            fontSize = 12.sp,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+                    Switch(
+                        checked = userProfile?.isDiscoverable ?: false,
+                        onCheckedChange = { viewModel.setDiscoverability(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color(0xFFF43F5E),
+                            uncheckedThumbColor = Color(0xFF94A3B8),
+                            uncheckedTrackColor = Color(0xFFF1F5F9)
+                        )
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -186,6 +217,13 @@ fun PairingScreen(
                         CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                     } else {
                         Text("Link Accounts", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    }
+                }
+
+                if (onSkip != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    TextButton(onClick = onSkip) {
+                        Text("Skip for now", color = Color(0xFF64748B), fontSize = 14.sp, fontWeight = FontWeight.Medium)
                     }
                 }
             }

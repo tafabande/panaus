@@ -68,97 +68,113 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
     fun sendNote(coupleId: String, senderId: String, receiverId: String?, content: String) {
         if (content.isBlank() || receiverId == null) return
         viewModelScope.launch {
-            val note = Note(
-                coupleId = coupleId,
-                senderId = senderId,
-                receiverId = receiverId,
-                content = content.trim(),
-                createdAt = DateUtils.getCurrentIsoTime()
-            )
-            repository.sendNote(note)
+            runCatching {
+                val note = Note(
+                    coupleId = coupleId,
+                    senderId = senderId,
+                    receiverId = receiverId,
+                    content = content.trim(),
+                    createdAt = DateUtils.getCurrentIsoTime()
+                )
+                repository.sendNote(note)
+            }.onFailure { it.printStackTrace() }
         }
     }
 
     fun addTodo(coupleId: String, creatorId: String, title: String, assignedTo: String) {
         if (title.isBlank()) return
         viewModelScope.launch {
-            val todo = TodoItem(
-                coupleId = coupleId,
-                title = title.trim(),
-                assignedTo = assignedTo,
-                isCompleted = false,
-                createdBy = creatorId,
-                createdAt = DateUtils.getCurrentIsoTime(),
-                completedAt = null
-            )
-            repository.addTodo(todo)
+            runCatching {
+                val todo = TodoItem(
+                    coupleId = coupleId,
+                    title = title.trim(),
+                    assignedTo = assignedTo,
+                    isCompleted = false,
+                    createdBy = creatorId,
+                    createdAt = DateUtils.getCurrentIsoTime(),
+                    completedAt = null
+                )
+                repository.addTodo(todo)
+            }.onFailure { it.printStackTrace() }
         }
     }
 
     fun toggleTodo(todo: TodoItem) {
         viewModelScope.launch {
-            val completedAt = if (!todo.isCompleted) DateUtils.getCurrentIsoTime() else null
-            repository.toggleTodo(todo.id, !todo.isCompleted, completedAt)
+            runCatching {
+                val completedAt = if (!todo.isCompleted) DateUtils.getCurrentIsoTime() else null
+                repository.toggleTodo(todo.id, !todo.isCompleted, completedAt)
+            }.onFailure { it.printStackTrace() }
         }
     }
 
     fun deleteTodo(todoId: String) {
         viewModelScope.launch {
-            repository.deleteTodo(todoId)
+            runCatching {
+                repository.deleteTodo(todoId)
+            }.onFailure { it.printStackTrace() }
         }
     }
 
     fun addEvent(coupleId: String, creatorId: String, title: String, date: String, time: String, category: String) {
         if (title.isBlank() || date.isBlank()) return
         viewModelScope.launch {
-            val event = CalendarEvent(
-                coupleId = coupleId,
-                title = title.trim(),
-                date = date,
-                time = time,
-                category = category,
-                createdBy = creatorId,
-                createdAt = DateUtils.getCurrentIsoTime()
-            )
-            repository.addEvent(event)
+            runCatching {
+                val event = CalendarEvent(
+                    coupleId = coupleId,
+                    title = title.trim(),
+                    date = date,
+                    time = time,
+                    category = category,
+                    createdBy = creatorId,
+                    createdAt = DateUtils.getCurrentIsoTime()
+                )
+                repository.addEvent(event)
+            }.onFailure { it.printStackTrace() }
         }
     }
 
     fun addMood(userId: String, coupleId: String, moodValue: Int, emoji: String, note: String) {
         viewModelScope.launch {
-            val mood = Mood(
-                userId = userId,
-                coupleId = coupleId,
-                moodValue = moodValue,
-                emoji = emoji,
-                note = note.trim(),
-                createdAt = DateUtils.getCurrentIsoTime()
-            )
-            repository.addMood(mood)
+            runCatching {
+                val mood = Mood(
+                    userId = userId,
+                    coupleId = coupleId,
+                    moodValue = moodValue,
+                    emoji = emoji,
+                    note = note.trim(),
+                    createdAt = DateUtils.getCurrentIsoTime()
+                )
+                repository.addMood(mood)
+            }.onFailure { it.printStackTrace() }
         }
     }
 
     fun addAsk(coupleId: String, fromUserId: String, toUserId: String, text: String, type: String) {
         if (text.isBlank()) return
         viewModelScope.launch {
-            val ask = Ask(
-                coupleId = coupleId,
-                fromUserId = fromUserId,
-                toUserId = toUserId,
-                requestText = text.trim(),
-                requestType = type,
-                status = "pending",
-                responseText = "",
-                createdAt = DateUtils.getCurrentIsoTime(),
-                respondedAt = null
-            )
-            repository.addAsk(ask)
+            runCatching {
+                val ask = Ask(
+                    coupleId = coupleId,
+                    fromUserId = fromUserId,
+                    toUserId = toUserId,
+                    requestText = text.trim(),
+                    requestType = type,
+                    status = "pending",
+                    responseText = "",
+                    createdAt = DateUtils.getCurrentIsoTime(),
+                    respondedAt = null
+                )
+                repository.addAsk(ask)
+            }.onFailure { it.printStackTrace() }
         }
     }
 
     fun updateAskStatus(askId: String, status: String) {
         viewModelScope.launch {
-            repository.updateAskStatus(askId, status, DateUtils.getCurrentIsoTime())
+            runCatching {
+                repository.updateAskStatus(askId, status, DateUtils.getCurrentIsoTime())
+            }.onFailure { it.printStackTrace() }
         }
     }
 
