@@ -156,6 +156,7 @@ fun PairingScreen(
                             copied = false
                         }
                     }
+                }
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Discoverability Toggle
