@@ -157,7 +157,7 @@ fun CalendarScreen(
                 }
             }
 
-            items(events) { event ->
+            items(events, key = { it.id }) { event ->
                 val (monthStr, dayStr) = DateUtils.formatMonthDay(event.date)
 
                 Card(

@@ -36,8 +36,8 @@ fun TodosScreen(
     var title by remember { mutableStateOf("") }
     var assignedTo by remember { mutableStateOf("unassigned") }
 
-    val activeTodos = todos.filter { !it.isCompleted }
-    val completedTodos = todos.filter { it.isCompleted }
+    val activeTodos = remember(todos) { todos.filter { !it.isCompleted } }
+    val completedTodos = remember(todos) { todos.filter { it.isCompleted } }
 
     Scaffold(
         topBar = {
@@ -140,7 +140,7 @@ fun TodosScreen(
                 }
             }
 
-            items(activeTodos) { todo ->
+            items(activeTodos, key = { it.id }) { todo ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -176,7 +176,7 @@ fun TodosScreen(
                 item {
                     Text("COMPLETED", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF94A3B8), modifier = Modifier.padding(top = 16.dp))
                 }
-                items(completedTodos) { todo ->
+                items(completedTodos, key = { it.id }) { todo ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),

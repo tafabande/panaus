@@ -20,6 +20,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.google.firebase.FirebaseApp
+import com.google.firebase.appcheck.FirebaseAppCheck
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.auth.FirebaseAuth
 import com.ourspace.app.ui.auth.LoginScreen
 import com.ourspace.app.ui.auth.RegisterScreen
@@ -33,12 +35,23 @@ import com.ourspace.app.ui.features.PremiumFeatureScreen
 import com.ourspace.app.ui.user.DashboardScreen
 import com.ourspace.app.ui.user.PairingScreen
 import com.ourspace.app.ui.user.UserViewModel
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.remember
+import com.ourspace.app.util.GlobalErrorHandler
+import com.ourspace.app.util.UiFreezeDetector
 
 class MainActivity : ComponentActivity() {
+    private val freezeDetector = UiFreezeDetector()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        freezeDetector.start()
         FirebaseApp.initializeApp(this)
+        FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
+            PlayIntegrityAppCheckProviderFactory.getInstance()
+        )
         enableEdgeToEdge()
         setContent {
             val userViewModel: UserViewModel = viewModel()
@@ -55,8 +68,19 @@ class MainActivity : ComponentActivity() {
 
             val navController = rememberNavController()
             val startDest = if (FirebaseAuth.getInstance().currentUser != null) "main_flow" else "login"
+            
+            val snackbarHostState = remember { SnackbarHostState() }
 
-            Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+            LaunchedEffect(Unit) {
+                GlobalErrorHandler.errorEvents.collect { message ->
+                    snackbarHostState.showSnackbar(message)
+                }
+            }
+
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+            ) { innerPadding ->
                 NavHost(
                     navController = navController,
                     startDestination = startDest,
@@ -189,5 +213,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        freezeDetector.stop()
     }
 }

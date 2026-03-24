@@ -7,6 +7,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 
 class UserRepository {
     private val db = FirebaseFirestore.getInstance()
@@ -27,22 +29,22 @@ class UserRepository {
         awaitClose { listener.remove() }
     }
 
-    suspend fun pairWithPartner(currentUserId: String, partnerCode: String): Result<Unit> {
-        return try {
+    suspend fun pairWithPartner(currentUserId: String, partnerCode: String): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
             if (currentUserId == partnerCode) {
-                return Result.failure(Exception("You can't pair with yourself."))
+                return@withContext Result.failure(Exception("You can't pair with yourself."))
             }
 
             val partnerRef = db.collection("users").document(partnerCode)
             val partnerSnap = partnerRef.get().await()
 
             if (!partnerSnap.exists()) {
-                return Result.failure(Exception("Invalid invite code. Partner not found."))
+                return@withContext Result.failure(Exception("Invalid invite code. Partner not found."))
             }
 
             val partnerData = partnerSnap.toObject(UserProfile::class.java)
             if (partnerData?.partnerId != null) {
-                return Result.failure(Exception("This user is already paired with someone."))
+                return@withContext Result.failure(Exception("This user is already paired with someone."))
             }
 
             val coupleId = listOf(currentUserId, partnerCode).sorted().joinToString("_")
@@ -70,14 +72,14 @@ class UserRepository {
             Result.success(Unit)
         } catch (e: Exception) {
             if (e is com.google.firebase.firestore.FirebaseFirestoreException && e.code == com.google.firebase.firestore.FirebaseFirestoreException.Code.PERMISSION_DENIED) {
-                 return Result.failure(Exception("User not found, or they have disabled discoverability."))
+                 return@withContext Result.failure(Exception("User not found, or they have disabled discoverability."))
             }
             Result.failure(e)
         }
     }
 
-    suspend fun updateDiscoverability(userId: String, isDiscoverable: Boolean): Result<Unit> {
-        return try {
+    suspend fun updateDiscoverability(userId: String, isDiscoverable: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
             db.collection("users").document(userId).update("isDiscoverable", isDiscoverable).await()
             Result.success(Unit)
         } catch (e: Exception) {

@@ -7,6 +7,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 
 class FeaturesRepository {
     private val db = FirebaseFirestore.getInstance()
@@ -30,7 +32,7 @@ class FeaturesRepository {
         awaitClose { listener.remove() }
     }
 
-    suspend fun sendNote(note: Note) {
+    suspend fun sendNote(note: Note) = withContext(Dispatchers.IO) {
         db.collection("notes").add(note).await()
     }
 
@@ -52,18 +54,18 @@ class FeaturesRepository {
         awaitClose { listener.remove() }
     }
 
-    suspend fun addTodo(todo: TodoItem) {
+    suspend fun addTodo(todo: TodoItem) = withContext(Dispatchers.IO) {
         db.collection("todos").add(todo).await()
     }
 
-    suspend fun toggleTodo(id: String, isCompleted: Boolean, completedAt: String?) {
+    suspend fun toggleTodo(id: String, isCompleted: Boolean, completedAt: String?) = withContext(Dispatchers.IO) {
         db.collection("todos").document(id).update(
             "isCompleted", isCompleted,
             "completedAt", completedAt
         ).await()
     }
 
-    suspend fun deleteTodo(id: String) {
+    suspend fun deleteTodo(id: String) = withContext(Dispatchers.IO) {
         db.collection("todos").document(id).delete().await()
     }
 
@@ -85,7 +87,7 @@ class FeaturesRepository {
         awaitClose { listener.remove() }
     }
 
-    suspend fun addEvent(event: CalendarEvent) {
+    suspend fun addEvent(event: CalendarEvent) = withContext(Dispatchers.IO) {
         db.collection("events").add(event).await()
     }
 
@@ -108,7 +110,7 @@ class FeaturesRepository {
         awaitClose { listener.remove() }
     }
 
-    suspend fun addMood(mood: Mood) {
+    suspend fun addMood(mood: Mood) = withContext(Dispatchers.IO) {
         db.collection("moods").add(mood).await()
     }
 
@@ -130,11 +132,11 @@ class FeaturesRepository {
         awaitClose { listener.remove() }
     }
 
-    suspend fun addAsk(ask: Ask) {
+    suspend fun addAsk(ask: Ask) = withContext(Dispatchers.IO) {
         db.collection("asks").add(ask).await()
     }
 
-    suspend fun updateAskStatus(id: String, status: String, respondedAt: String) {
+    suspend fun updateAskStatus(id: String, status: String, respondedAt: String) = withContext(Dispatchers.IO) {
         db.collection("asks").document(id).update(
             "status", status,
             "respondedAt", respondedAt

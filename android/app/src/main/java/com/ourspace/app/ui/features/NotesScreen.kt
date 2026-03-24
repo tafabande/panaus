@@ -116,7 +116,7 @@ fun NotesScreen(
                     )
                 }
             } else {
-                items(notes) { note ->
+                items(notes, key = { it.id }) { note ->
                     val isMe = note.senderId == userProfile.userId
                     Row(
                         modifier = Modifier.fillMaxWidth(),

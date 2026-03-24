@@ -159,7 +159,7 @@ fun MoodScreen(
                     )
                 }
             } else {
-                items(moods) { mood ->
+                items(moods, key = { it.id }) { mood ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),

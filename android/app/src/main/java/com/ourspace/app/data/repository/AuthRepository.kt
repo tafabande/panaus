@@ -5,6 +5,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.ourspace.app.data.model.UserProfile
 import com.ourspace.app.data.util.DateUtils
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 
 class AuthRepository {
     private val auth = FirebaseAuth.getInstance()
@@ -12,8 +14,8 @@ class AuthRepository {
 
     val currentUser get() = auth.currentUser
 
-    suspend fun login(email: String, pass: String): Result<Unit> {
-        return try {
+    suspend fun login(email: String, pass: String): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
             auth.signInWithEmailAndPassword(email, pass).await()
             Result.success(Unit)
         } catch (e: Exception) {
@@ -21,8 +23,8 @@ class AuthRepository {
         }
     }
 
-    suspend fun register(name: String, email: String, pass: String): Result<Unit> {
-        return try {
+    suspend fun register(name: String, email: String, pass: String): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
             val result = auth.createUserWithEmailAndPassword(email, pass).await()
             val userId = result.user?.uid ?: throw Exception("User ID is null")
 

@@ -177,7 +177,7 @@ fun AsksScreen(
                 }
             }
 
-            items(asks) { ask ->
+            items(asks, key = { it.id }) { ask ->
                 val amIReceiver = ask.toUserId == userProfile.userId
                 val isPending = ask.status == "pending"
 
