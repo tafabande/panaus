@@ -16,6 +16,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ourspace.app.ui.features.FeaturesViewModel
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import com.ourspace.app.R
 
 @Composable
 fun DashboardScreen(
@@ -46,18 +51,28 @@ fun DashboardScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Text(
-                    text = "Our Space",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E293B)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painter = painterResource(id = R.mipmap.ic_launcher_round),
+                    contentDescription = "App Logo",
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
                 )
-                Text(
-                    text = "Hi, ${userProfile?.name ?: "there"}",
-                    fontSize = 14.sp,
-                    color = Color(0xFF64748B)
-                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = "Our Space",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E293B)
+                    )
+                    Text(
+                        text = "Hi, ${userProfile?.name ?: "there"}",
+                        fontSize = 14.sp,
+                        color = Color(0xFF64748B)
+                    )
+                }
             }
             Button(
                 onClick = {
