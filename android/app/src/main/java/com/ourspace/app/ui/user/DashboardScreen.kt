@@ -16,8 +16,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ourspace.app.ui.features.FeaturesViewModel
-import androidx.compose.foundation.Image
-import androidx.compose.ui.res.painterResource
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
 import com.ourspace.app.R
@@ -53,12 +53,15 @@ fun DashboardScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(id = R.mipmap.ic_launcher_round),
+                Icon(
+                    imageVector = Icons.Rounded.Favorite,
                     contentDescription = "App Logo",
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
+                        .background(Color(0xFFFFF1F2))
+                        .padding(8.dp),
+                    tint = Color(0xFFF43F5E)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
