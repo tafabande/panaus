@@ -17,6 +17,7 @@ import com.ourspace.app.ui.user.UserViewModel
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.unit.dp
 
 sealed class BottomNavItem(var title: String, var icon: androidx.compose.ui.graphics.vector.ImageVector, var route: String) {
     object Home : BottomNavItem("Home", Icons.Default.FavoriteBorder, "home")
