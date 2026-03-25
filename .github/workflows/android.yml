@@ -16,30 +16,6 @@ jobs:
     steps:
     - uses: actions/checkout@v6
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v6
-      with:
-        node-version: '22'
-
-    - name: Install Dependencies
-      run: npm install
-
-    - name: Set up Environment Variables
-      run: |
-        echo "VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY }}" > .env
-        echo "VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}" >> .env
-        echo "VITE_FIREBASE_PROJECT_ID=${{ secrets.VITE_FIREBASE_PROJECT_ID }}" >> .env
-        echo "VITE_FIREBASE_STORAGE_BUCKET=${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}" >> .env
-        echo "VITE_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}" >> .env
-        echo "VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID }}" >> .env
-        echo "VITE_FIREBASE_MEASUREMENT_ID=${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}" >> .env
-
-    - name: Build Web Assets
-      run: npm run build
-
-    - name: Sync Capacitor
-      run: npx cap sync android
-
     - name: set up JDK 21
       uses: actions/setup-java@v5
       with:
@@ -48,21 +24,21 @@ jobs:
         cache: gradle
 
     - name: Grant execute permission for gradlew
-      run: chmod +x android/gradlew
+      run: chmod +x gradlew
 
     - name: Decode Google Services JSON
       env:
         GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
-      run: echo "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+      run: echo "$GOOGLE_SERVICES_JSON" > app/google-services.json
 
     - name: Build with Gradle
-      run: cd android && ./gradlew assembleDebug
+      run: ./gradlew assembleDebug
 
     - name: Upload APK
       uses: actions/upload-artifact@v6
       with:
         name: app-debug
-        path: android/app/build/outputs/apk/debug/app-debug.apk
+        path: app/build/outputs/apk/debug/app-debug.apk
 
     - name: Create Release
       if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
@@ -71,7 +47,7 @@ jobs:
         tag_name: build-${{ github.run_number }}
         name: Auto-Build Release #${{ github.run_number }}
         body: "Automated build triggered by push to master. \nCommit: ${{ github.sha }}"
-        files: android/app/build/outputs/apk/debug/app-debug.apk
+        files: app/build/outputs/apk/debug/app-debug.apk
         draft: false
         prerelease: false
       env:
