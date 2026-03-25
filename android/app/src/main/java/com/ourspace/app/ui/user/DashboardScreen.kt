@@ -20,16 +20,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ourspace.app.ui.features.FeaturesViewModel
 
-// Aura Amour Design Tokens
-private val primaryColor = Color(0xFF923f5f)
-private val primaryContainer = Color(0xFFfe97b9)
-private val surfaceColor = Color(0xFFf7f6f3)
-private val surfaceContainerLow = Color(0xFFf1f1ee)
-private val surfaceContainerHighest = Color(0xFFddddd9)
-private val onSurfaceColor = Color(0xFF2e2f2d)
-private val secondaryColor = Color(0xFFa52a65)
-private val tertiaryColor = Color(0xFF6c5a00)
-
 @Composable
 fun DashboardScreen(
     onLogout: () -> Unit,
@@ -43,7 +33,7 @@ fun DashboardScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(surfaceColor)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(24.dp)
             .verticalScroll(scrollState)
     ) {
@@ -58,13 +48,13 @@ fun DashboardScreen(
                     text = "Aura Amour",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
-                    color = primaryColor,
+                    color = MaterialTheme.colorScheme.primary,
                     fontFamily = FontFamily.Serif // Simulating Noto Serif
                 )
                 Text(
                     text = "Welcome back, ${userProfile?.name ?: "darling"}",
                     fontSize = 16.sp,
-                    color = onSurfaceColor,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontFamily = FontFamily.SansSerif
                 )
             }
@@ -72,7 +62,7 @@ fun DashboardScreen(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(primaryContainer)
+                    .background(MaterialTheme.colorScheme.primaryContainer)
             ) {
                 // Profile Avatar placeholder
             }
@@ -84,14 +74,14 @@ fun DashboardScreen(
             Card(
                 modifier = Modifier.weight(1f).height(140.dp),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = surfaceContainerLow)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("My Heart", fontSize = 14.sp, color = secondaryColor, fontFamily = FontFamily.Serif)
+                    Text("My Heart", fontSize = 14.sp, color = MaterialTheme.colorScheme.secondary, fontFamily = FontFamily.Serif)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Peaceful", fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = primaryColor)
+                    Text("Peaceful", fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.weight(1f))
-                    Text("Update >", fontSize = 12.sp, color = primaryColor.copy(alpha = 0.7f))
+                    Text("Update >", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
                 }
             }
 
@@ -99,47 +89,67 @@ fun DashboardScreen(
             Card(
                 modifier = Modifier.weight(1f).height(140.dp),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = primaryContainer.copy(alpha = 0.3f))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Their Heart", fontSize = 14.sp, color = secondaryColor, fontFamily = FontFamily.Serif)
+                    Text("Their Heart", fontSize = 14.sp, color = MaterialTheme.colorScheme.secondary, fontFamily = FontFamily.Serif)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Joyful", fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = primaryColor)
+                    Text("Joyful", fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.weight(1f))
-                    Text("Send a hug >", fontSize = 12.sp, color = primaryColor.copy(alpha = 0.7f))
+                    Text("Send a hug >", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
+        // Logging Mood Row
+        Text("Log Wellness", fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurface, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("Healthy", "Sick", "Nauseated").forEach { state ->
+                ElevatedFilterChip(
+                    selected = false,
+                    onClick = { /* TODO Local State for Mood */ },
+                    label = { Text(state) },
+                    colors = FilterChipDefaults.elevatedFilterChipColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    shape = RoundedCornerShape(16.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
         // Days at a glance / Mini timeline
-        Text("Our Recent Days", fontSize = 20.sp, color = onSurfaceColor, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold)
+        Text("Our Recent Days", fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurface, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
         
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 // Activity Row 1
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(modifier = Modifier.size(12.dp).clip(CircleShape).background(primaryColor))
+                    Box(modifier = Modifier.size(12.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary))
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
-                        Text("Coffee Date at The Local", fontSize = 16.sp, color = onSurfaceColor, fontWeight = FontWeight.Medium)
-                        Text("Yesterday", fontSize = 12.sp, color = Color.Gray)
+                        Text("Coffee Date at The Local", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
+                        Text("Yesterday", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 // Activity Row 2
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(modifier = Modifier.size(12.dp).clip(CircleShape).background(tertiaryColor))
+                    Box(modifier = Modifier.size(12.dp).clip(CircleShape).background(MaterialTheme.colorScheme.tertiary))
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
-                        Text("Long Walk in the Park", fontSize = 16.sp, color = onSurfaceColor, fontWeight = FontWeight.Medium)
-                        Text("Sunday", fontSize = 12.sp, color = Color.Gray)
+                        Text("Long Walk in the Park", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
+                        Text("Sunday", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -152,10 +162,12 @@ fun DashboardScreen(
                 userViewModel.logout()
                 onLogout()
             },
-            colors = ButtonDefaults.buttonColors(containerColor = surfaceContainerHighest),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text("Debug Logout", color = primaryColor)
+            Text("Debug Logout", color = MaterialTheme.colorScheme.onErrorContainer)
         }
+        
+        Spacer(modifier = Modifier.height(100.dp)) // NavBar cushion
     }
 }

@@ -14,11 +14,15 @@ import com.ourspace.app.ui.user.ProfileScreen
 import com.ourspace.app.ui.features.*
 import com.ourspace.app.data.model.UserProfile
 import com.ourspace.app.ui.user.UserViewModel
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 
 sealed class BottomNavItem(var title: String, var icon: androidx.compose.ui.graphics.vector.ImageVector, var route: String) {
     object Home : BottomNavItem("Home", Icons.Default.FavoriteBorder, "home")
     object Notes : BottomNavItem("Notes", Icons.Default.Email, "notes")
     object Calendar : BottomNavItem("Calendar", Icons.Default.DateRange, "calendar")
+    object Game : BottomNavItem("Play", Icons.Default.Star, "game")
     object Memories : BottomNavItem("Memories", Icons.Default.PhotoAlbum, "memories")
     object Profile : BottomNavItem("Profile", Icons.Default.Person, "profile")
 }
@@ -36,21 +40,36 @@ fun MainScreen(
         BottomNavItem.Home,
         BottomNavItem.Notes,
         BottomNavItem.Calendar,
+        BottomNavItem.Game,
         BottomNavItem.Memories,
         BottomNavItem.Profile
     )
     
     Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { /* TODO: Log Mood Action */ },
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.padding(bottom = 80.dp) // Lift above floating nav bar
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Log Mood")
+            }
+        },
         bottomBar = {
             NavigationBar(
-                containerColor = Color(0xFFF7F6F3) // Aura Amour background
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 16.dp)
+                    .clip(RoundedCornerShape(32.dp))
+                    .shadow(12.dp, RoundedCornerShape(32.dp), spotColor = MaterialTheme.colorScheme.onSurface),
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f), // Glassmorphism
+                tonalElevation = 0.dp
             ) {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
                 items.forEach { item ->
                     NavigationBarItem(
                         icon = { Icon(item.icon, contentDescription = item.title) },
-                        label = { Text(item.title) },
                         selected = currentRoute == item.route,
                         onClick = {
                             navController.navigate(item.route) {
@@ -60,11 +79,11 @@ fun MainScreen(
                             }
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = Color(0xFF621837), // on_primary_container
-                            unselectedIconColor = Color(0xFF5B5C5A), // on_surface_variant
-                            selectedTextColor = Color(0xFF621837),
-                            unselectedTextColor = Color(0xFF5B5C5A),
-                            indicatorColor = Color(0xFFFE97B9) // primary_container
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
                         )
                     )
                 }
@@ -91,6 +110,9 @@ fun MainScreen(
             composable(BottomNavItem.Calendar.route) {
                 // To be re-styled later
                 CalendarScreen(userProfile = userProfile, viewModel = featuresViewModel, onBack = {})
+            }
+            composable(BottomNavItem.Game.route) {
+                GameScreen(userProfile = userProfile, viewModel = featuresViewModel)
             }
             composable(BottomNavItem.Memories.route) {
                 MemoriesScreen(userProfile = userProfile, viewModel = featuresViewModel)

@@ -20,10 +20,6 @@ import androidx.compose.ui.unit.sp
 import com.ourspace.app.data.model.UserProfile
 import kotlin.random.Random
 
-private val primaryColor = Color(0xFF923f5f)
-private val surfaceColor = Color(0xFFf7f6f3)
-private val onSurfaceColor = Color(0xFF2e2f2d)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MemoriesScreen(
@@ -32,25 +28,25 @@ fun MemoriesScreen(
     onBack: () -> Unit = {}
 ) {
     Scaffold(
-        containerColor = surfaceColor,
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             TopAppBar(
                 title = { 
                     Text(
                         "Memories Album", 
                         fontFamily = FontFamily.Serif, 
-                        color = primaryColor,
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold 
                     ) 
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = surfaceColor)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { /* TODO */ },
-                containerColor = primaryColor,
-                contentColor = Color.White
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Upload Memory")
             }
@@ -87,7 +83,7 @@ fun MemoryItemPlaceholder(index: Int) {
         Text(
             text = "October ${10 + index}, 2025",
             fontSize = 12.sp,
-            color = onSurfaceColor,
+            color = MaterialTheme.colorScheme.onSurface,
             fontFamily = FontFamily.SansSerif,
             fontWeight = FontWeight.Medium
         )

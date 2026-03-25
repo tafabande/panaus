@@ -22,12 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ourspace.app.data.model.UserProfile
 
-// Tokens
-private val primaryColor = Color(0xFF923f5f)
-private val surfaceColor = Color(0xFFf7f6f3)
-private val surfaceContainerLow = Color(0xFFf1f1ee)
-private val onSurfaceColor = Color(0xFF2e2f2d)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
@@ -40,7 +34,7 @@ fun ProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(surfaceColor)
+            .background(MaterialTheme.colorScheme.surface)
             .verticalScroll(scrollState)
             .padding(24.dp)
     ) {
@@ -54,11 +48,11 @@ fun ProfileScreen(
                 text = "Profile & Settings",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = primaryColor,
+                color = MaterialTheme.colorScheme.primary,
                 fontFamily = FontFamily.Serif
             )
             IconButton(onClick = { /* TODO */ }) {
-                Icon(Icons.Default.Settings, contentDescription = "Settings", tint = primaryColor)
+                Icon(Icons.Default.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.primary)
             }
         }
 
@@ -71,35 +65,34 @@ fun ProfileScreen(
                 modifier = Modifier
                     .size(120.dp)
                     .clip(CircleShape)
-                    .background(surfaceContainerLow),
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = userProfile.name.take(1).uppercase(),
                     fontSize = 48.sp,
-                    color = primaryColor,
+                    color = MaterialTheme.colorScheme.primary,
                     fontFamily = FontFamily.Serif
                 )
             }
-            // Edit badge
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .offset(x = 40.dp, y = (-10).dp)
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(primaryColor)
+                    .background(MaterialTheme.colorScheme.primary)
                     .clickable { /* TODO */ },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Edit, contentDescription = "Edit Avatar", tint = Color.White, modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Edit, contentDescription = "Edit Avatar", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(18.dp))
             }
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
         // Info Fields
-        Text("Personal Details", fontSize = 18.sp, color = onSurfaceColor, fontFamily = FontFamily.Serif, fontWeight = FontWeight.SemiBold)
+        Text("Personal Details", fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface, fontFamily = FontFamily.Serif, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
@@ -109,10 +102,10 @@ fun ProfileScreen(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = primaryColor,
-                unfocusedBorderColor = Color.LightGray,
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface
             )
         )
         
@@ -126,26 +119,26 @@ fun ProfileScreen(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = primaryColor,
-                unfocusedBorderColor = Color.LightGray,
-                focusedContainerColor = surfaceContainerLow,
-                unfocusedContainerColor = surfaceContainerLow
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant
             )
         )
 
         Spacer(modifier = Modifier.height(32.dp))
 
         // Customization
-        Text("App Customization", fontSize = 18.sp, color = onSurfaceColor, fontFamily = FontFamily.Serif, fontWeight = FontWeight.SemiBold)
+        Text("App Customization", fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface, fontFamily = FontFamily.Serif, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(16.dp))
         
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Select Theme Accent", fontSize = 16.sp, color = onSurfaceColor, fontWeight = FontWeight.Medium)
+                Text("Select Theme Accent", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(Color(0xFF923f5f)))
@@ -164,12 +157,12 @@ fun ProfileScreen(
                 onLogout()
             },
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE8E8E5)),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer),
             shape = RoundedCornerShape(16.dp)
         ) {
-            Text("Sign Out", color = primaryColor, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("Sign Out", color = MaterialTheme.colorScheme.onErrorContainer, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
         
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(100.dp)) // NavBar Cushion
     }
 }

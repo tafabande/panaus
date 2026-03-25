@@ -40,6 +40,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.remember
 import com.ourspace.app.util.GlobalErrorHandler
 import com.ourspace.app.util.UiFreezeDetector
+import com.ourspace.app.ui.theme.OurSpaceTheme
 
 class MainActivity : ComponentActivity() {
     private val freezeDetector = UiFreezeDetector()
@@ -77,10 +78,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            Scaffold(
-                modifier = Modifier.fillMaxSize(),
-                snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-            ) { innerPadding ->
+            OurSpaceTheme {
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+                ) { innerPadding ->
                 NavHost(
                     navController = navController,
                     startDestination = startDest,
