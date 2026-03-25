@@ -1,16 +1,22 @@
-# React + Vite
+# Panaus Android App
+Native Jetpack Compose application optimized for performance and stability.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Key Optimizations
+- **Startup Performance**: Firebase initialization moved to background threads to eliminate UI thread freezes.
+- **Build Optimization**: R8 Full Mode enabled with custom ProGuard rules to prevent lock verification issues.
+- **Error Handling**: Integrated `UiFreezeDetector` and `GlobalErrorHandler` for robust monitoring.
 
-Currently, two official plugins are available:
+## GitHub Actions & Secrets
+The CI/CD pipeline in `.github/workflows/android.yml` handles automated builds and releases.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+### Required GitHub Secrets
+To ensure successful builds, update your GitHub Repository Secrets with:
+1. `GOOGLE_SERVICES_JSON`: The full content of your `app/google-services.json`.
+2. `FIREBASE_SERVER_KEY`: From Firebase Console settings.
+3. `ANALYTICS_PROPERTY_ID`: If using Google Analytics reporting.
+4. `PREMIUM_SUBSCRIPTION_SKU`: The SKU ID for in-app purchases.
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Local Development
+1. Open in Android Studio.
+2. Build with Gradle to sync dependencies.
+3. Use `./gradlew assembleDebug` for local testing.

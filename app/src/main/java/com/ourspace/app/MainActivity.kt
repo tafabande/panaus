@@ -49,13 +49,17 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         freezeDetector.start()
-        FirebaseApp.initializeApp(this)
-        FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
-            PlayIntegrityAppCheckProviderFactory.getInstance()
-        )
         enableEdgeToEdge()
         setContent {
             val userViewModel: UserViewModel = viewModel()
+            
+            // Move heavy initialization to background thread
+            LaunchedEffect(Unit) {
+                FirebaseApp.initializeApp(this@MainActivity)
+                FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
+                    PlayIntegrityAppCheckProviderFactory.getInstance()
+                )
+            }
             val userProfile by userViewModel.userProfile.collectAsState()
             val hasSkippedPairing by userViewModel.hasSkippedPairing.collectAsState()
             

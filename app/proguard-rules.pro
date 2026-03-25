@@ -1,21 +1,13 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ProGuard rules to prevent lock verification issues
+-dontwarn com.google.android.gms.internal.**
+-keep class com.google.android.gms.** { *; }
+-keep class com.google.firebase.** { *; }
+-keepattributes Signature, *Annotation*, EnclosingMethod, InnerClasses
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Preserve Phenotype classes
+-keep class com.google.android.gms.phenotype.** { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# For Kotlin Coroutines
+-keepnames class kotlinx.coroutines.internal.MainDispatcherLoader {}
+-keepnames class kotlinx.coroutines.android.HandlerContext {}
+-keep class kotlinx.coroutines.android.AndroidDispatcherFactory { *; }
