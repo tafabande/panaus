@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import com.ourspace.app.util.GlobalErrorHandler
 
 sealed class PairingState {
     object Idle : PairingState()
@@ -36,9 +38,11 @@ class UserViewModel(private val repository: UserRepository = UserRepository()) :
         val currentUser = FirebaseAuth.getInstance().currentUser
         if (currentUser != null) {
             viewModelScope.launch {
-                repository.observeUser(currentUser.uid).collectLatest { profile ->
-                    _userProfile.value = profile
-                }
+                repository.observeUser(currentUser.uid)
+                    .catch { e -> GlobalErrorHandler.recordException(e) }
+                    .collectLatest { profile ->
+                        _userProfile.value = profile
+                    }
             }
         }
     }
@@ -60,7 +64,8 @@ class UserViewModel(private val repository: UserRepository = UserRepository()) :
     fun setDiscoverability(isDiscoverable: Boolean) {
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         viewModelScope.launch {
-            repository.updateDiscoverability(currentUserId, isDiscoverable)
+            val result = repository.updateDiscoverability(currentUserId, isDiscoverable)
+            result.onFailure { GlobalErrorHandler.recordException(it) }
         }
     }
 
@@ -80,7 +85,8 @@ class UserViewModel(private val repository: UserRepository = UserRepository()) :
         if (name.isBlank()) return
         viewModelScope.launch {
             _isSavingProfile.value = true
-            repository.updateProfile(currentUserId, name)
+            val result = repository.updateProfile(currentUserId, name)
+            result.onFailure { GlobalErrorHandler.recordException(it) }
             _isSavingProfile.value = false
         }
     }

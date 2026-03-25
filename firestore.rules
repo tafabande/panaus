@@ -68,15 +68,17 @@ service cloud.firestore {
         && isValidString(request.resource.data.title, 500);
     }
 
-    // Keep original rules for the rest
     match /updates/{updateId} {
-      allow read, write: if isMemberOfCouple(request.resource.data.coupleId || resource.data.coupleId);
+      allow read: if isMemberOfCouple(resource.data.coupleId);
+      allow create, update: if isMemberOfCouple(request.resource.data.coupleId);
     }
     match /photos/{photoId} {
-      allow read, write: if isMemberOfCouple(request.resource.data.coupleId || resource.data.coupleId);
+      allow read: if isMemberOfCouple(resource.data.coupleId);
+      allow create, update: if isMemberOfCouple(request.resource.data.coupleId);
     }
     match /locationShares/{shareId} {
-      allow read, write: if isMemberOfCouple(request.resource.data.coupleId || resource.data.coupleId);
+      allow read: if isMemberOfCouple(resource.data.coupleId);
+      allow create, update: if isMemberOfCouple(request.resource.data.coupleId);
     }
   }
 }

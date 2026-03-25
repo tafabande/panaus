@@ -11,6 +11,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import com.ourspace.app.util.GlobalErrorHandler
 
 class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRepository()) : ViewModel() {
     
@@ -41,34 +43,44 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
 
         notesJob?.cancel()
         notesJob = viewModelScope.launch {
-            repository.observeNotes(coupleId).collect { _notes.value = it }
+            repository.observeNotes(coupleId)
+                .catch { e -> GlobalErrorHandler.recordException(e) }
+                .collect { _notes.value = it }
         }
 
         todosJob?.cancel()
         todosJob = viewModelScope.launch {
-            repository.observeTodos(coupleId).collect { _todos.value = it }
+            repository.observeTodos(coupleId)
+                .catch { e -> GlobalErrorHandler.recordException(e) }
+                .collect { _todos.value = it }
         }
 
         eventsJob?.cancel()
         eventsJob = viewModelScope.launch {
-            repository.observeEvents(coupleId).collect { _events.value = it }
+            repository.observeEvents(coupleId)
+                .catch { e -> GlobalErrorHandler.recordException(e) }
+                .collect { _events.value = it }
         }
 
         moodsJob?.cancel()
         moodsJob = viewModelScope.launch {
-            repository.observeMoods(coupleId).collect { _moods.value = it }
+            repository.observeMoods(coupleId)
+                .catch { e -> GlobalErrorHandler.recordException(e) }
+                .collect { _moods.value = it }
         }
 
         asksJob?.cancel()
         asksJob = viewModelScope.launch {
-            repository.observeAsks(coupleId).collect { _asks.value = it }
+            repository.observeAsks(coupleId)
+                .catch { e -> GlobalErrorHandler.recordException(e) }
+                .collect { _asks.value = it }
         }
     }
 
     fun sendNote(coupleId: String, senderId: String, receiverId: String?, content: String) {
         if (content.isBlank() || receiverId == null) return
         viewModelScope.launch {
-            runCatching {
+            GlobalErrorHandler.runWithCatch {
                 val note = Note(
                     coupleId = coupleId,
                     senderId = senderId,
@@ -77,14 +89,14 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
                     createdAt = DateUtils.getCurrentIsoTime()
                 )
                 repository.sendNote(note)
-            }.onFailure { it.printStackTrace() }
+            }
         }
     }
 
     fun addTodo(coupleId: String, creatorId: String, title: String, assignedTo: String) {
         if (title.isBlank()) return
         viewModelScope.launch {
-            runCatching {
+            GlobalErrorHandler.runWithCatch {
                 val todo = TodoItem(
                     coupleId = coupleId,
                     title = title.trim(),
@@ -95,31 +107,31 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
                     completedAt = null
                 )
                 repository.addTodo(todo)
-            }.onFailure { it.printStackTrace() }
+            }
         }
     }
 
     fun toggleTodo(todo: TodoItem) {
         viewModelScope.launch {
-            runCatching {
+            GlobalErrorHandler.runWithCatch {
                 val completedAt = if (!todo.isCompleted) DateUtils.getCurrentIsoTime() else null
                 repository.toggleTodo(todo.id, !todo.isCompleted, completedAt)
-            }.onFailure { it.printStackTrace() }
+            }
         }
     }
 
     fun deleteTodo(todoId: String) {
         viewModelScope.launch {
-            runCatching {
+            GlobalErrorHandler.runWithCatch {
                 repository.deleteTodo(todoId)
-            }.onFailure { it.printStackTrace() }
+            }
         }
     }
 
     fun addEvent(coupleId: String, creatorId: String, title: String, date: String, time: String, category: String) {
         if (title.isBlank() || date.isBlank()) return
         viewModelScope.launch {
-            runCatching {
+            GlobalErrorHandler.runWithCatch {
                 val event = CalendarEvent(
                     coupleId = coupleId,
                     title = title.trim(),
@@ -130,13 +142,13 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
                     createdAt = DateUtils.getCurrentIsoTime()
                 )
                 repository.addEvent(event)
-            }.onFailure { it.printStackTrace() }
+            }
         }
     }
 
     fun addMood(userId: String, coupleId: String, moodValue: Int, emoji: String, note: String) {
         viewModelScope.launch {
-            runCatching {
+            GlobalErrorHandler.runWithCatch {
                 val mood = Mood(
                     userId = userId,
                     coupleId = coupleId,
@@ -146,14 +158,14 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
                     createdAt = DateUtils.getCurrentIsoTime()
                 )
                 repository.addMood(mood)
-            }.onFailure { it.printStackTrace() }
+            }
         }
     }
 
     fun addAsk(coupleId: String, fromUserId: String, toUserId: String, text: String, type: String) {
         if (text.isBlank()) return
         viewModelScope.launch {
-            runCatching {
+            GlobalErrorHandler.runWithCatch {
                 val ask = Ask(
                     coupleId = coupleId,
                     fromUserId = fromUserId,
@@ -166,15 +178,15 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
                     respondedAt = null
                 )
                 repository.addAsk(ask)
-            }.onFailure { it.printStackTrace() }
+            }
         }
     }
 
     fun updateAskStatus(askId: String, status: String) {
         viewModelScope.launch {
-            runCatching {
+            GlobalErrorHandler.runWithCatch {
                 repository.updateAskStatus(askId, status, DateUtils.getCurrentIsoTime())
-            }.onFailure { it.printStackTrace() }
+            }
         }
     }
 

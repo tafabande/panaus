@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.ourspace.app.util.GlobalErrorHandler
 
 sealed class AuthState {
     object Idle : AuthState()
@@ -25,7 +26,10 @@ class AuthViewModel(private val repository: AuthRepository = AuthRepository()) :
             val result = repository.login(email, pass)
             result.fold(
                 onSuccess = { _authState.value = AuthState.Success },
-                onFailure = { _authState.value = AuthState.Error(it.message ?: "Unknown login error") }
+                onFailure = { 
+                    GlobalErrorHandler.recordException(it)
+                    _authState.value = AuthState.Error(it.message ?: "Unknown login error") 
+                }
             )
         }
     }
@@ -40,7 +44,10 @@ class AuthViewModel(private val repository: AuthRepository = AuthRepository()) :
             val result = repository.register(name, email, pass)
             result.fold(
                 onSuccess = { _authState.value = AuthState.Success },
-                onFailure = { _authState.value = AuthState.Error(it.message ?: "Unknown register error") }
+                onFailure = { 
+                    GlobalErrorHandler.recordException(it)
+                    _authState.value = AuthState.Error(it.message ?: "Unknown register error") 
+                }
             )
         }
     }
