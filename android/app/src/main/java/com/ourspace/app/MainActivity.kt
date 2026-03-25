@@ -125,19 +125,9 @@ class MainActivity : ComponentActivity() {
                                 viewModel = userViewModel
                             )
                         } else {
-                            DashboardScreen(
-                                onLogout = {
-                                    navController.navigate("login") {
-                                        popUpTo("main_flow") { inclusive = true }
-                                    }
-                                },
-                                onNavigateToPairing = { navController.navigate("pairing") },
-                                onNavigateToNotes = { navController.navigate("notes") },
-                                onNavigateToTodos = { navController.navigate("todos") },
-                                onNavigateToCalendar = { navController.navigate("calendar") },
-                                onNavigateToMoods = { navController.navigate("moods") },
-                                onNavigateToAsks = { navController.navigate("asks") },
-                                onNavigateToLocation = { navController.navigate("location") },
+                            com.ourspace.app.ui.MainScreen(
+                                rootNavController = navController,
+                                userProfile = userProfile!!,
                                 userViewModel = userViewModel,
                                 featuresViewModel = featuresViewModel
                             )

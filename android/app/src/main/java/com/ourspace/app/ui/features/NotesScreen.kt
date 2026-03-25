@@ -14,11 +14,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ourspace.app.data.model.UserProfile
 import com.ourspace.app.data.util.DateUtils
+
+private val primaryColor = Color(0xFF923f5f)
+private val surfaceColor = Color(0xFFf7f6f3)
+private val onSurfaceColor = Color(0xFF2e2f2d)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,20 +43,21 @@ fun NotesScreen(
     }
 
     Scaffold(
+        containerColor = surfaceColor,
         topBar = {
             TopAppBar(
-                title = { Text("Pocket Notes", fontSize = 20.sp, fontWeight = FontWeight.Medium) },
+                title = { Text("Pocket Notes", fontSize = 24.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif, color = primaryColor) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color(0xFF64748B))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = onSurfaceColor)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = surfaceColor)
             )
         },
         bottomBar = {
             Surface(
-                color = Color.White,
+                color = surfaceColor,
                 shadowElevation = 8.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -66,8 +72,10 @@ fun NotesScreen(
                         placeholder = { Text("Write a note...") },
                         shape = RoundedCornerShape(24.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFFF43F5E),
-                            unfocusedBorderColor = Color(0xFFFFE4E6)
+                            focusedBorderColor = primaryColor,
+                            unfocusedBorderColor = Color.LightGray,
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
                         )
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -84,7 +92,7 @@ fun NotesScreen(
                             }
                         },
                         modifier = Modifier
-                            .background(Color(0xFFF43F5E), RoundedCornerShape(24.dp))
+                            .background(primaryColor, RoundedCornerShape(24.dp))
                             .padding(4.dp)
                     ) {
                         Icon(Icons.Filled.Send, contentDescription = "Send", tint = Color.White)
@@ -97,10 +105,9 @@ fun NotesScreen(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFFAFAFA))
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item { Spacer(modifier = Modifier.height(16.dp)) }
             
@@ -109,7 +116,7 @@ fun NotesScreen(
                     Text(
                         text = "No notes yet. Leave a little message!",
                         modifier = Modifier.fillMaxWidth().padding(top = 40.dp),
-                        color = Color(0xFF94A3B8),
+                        color = Color.Gray,
                         fontSize = 14.sp,
                         fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -124,7 +131,7 @@ fun NotesScreen(
                     ) {
                         Card(
                             colors = CardDefaults.cardColors(
-                                containerColor = if (isMe) Color(0xFFF43F5E) else Color.White
+                                containerColor = if (isMe) primaryColor else Color.White
                             ),
                             shape = RoundedCornerShape(
                                 topStart = 16.dp,
@@ -132,20 +139,21 @@ fun NotesScreen(
                                 bottomStart = if (isMe) 16.dp else 0.dp,
                                 bottomEnd = if (isMe) 0.dp else 16.dp
                             ),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                             modifier = Modifier.widthIn(max = 280.dp)
                         ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
+                            Column(modifier = Modifier.padding(16.dp)) {
                                 Text(
                                     text = note.content,
-                                    color = if (isMe) Color.White else Color(0xFF1E293B),
-                                    fontSize = 14.sp
+                                    color = if (isMe) Color.White else onSurfaceColor,
+                                    fontSize = 15.sp,
+                                    lineHeight = 22.sp
                                 )
                                 Text(
                                     text = DateUtils.formatTime(note.createdAt),
-                                    color = if (isMe) Color(0xFFFFE4E6) else Color(0xFF94A3B8),
-                                    fontSize = 10.sp,
-                                    modifier = Modifier.align(Alignment.End).padding(top = 4.dp)
+                                    color = if (isMe) Color(0xFFffccd5) else Color.Gray,
+                                    fontSize = 11.sp,
+                                    modifier = Modifier.align(Alignment.End).padding(top = 8.dp)
                                 )
                             }
                         }
@@ -156,6 +164,3 @@ fun NotesScreen(
         }
     }
 }
-
-
-// Local formatTime removed in favor of DateUtils
