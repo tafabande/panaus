@@ -10,6 +10,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +32,7 @@ fun DashboardScreen(
 ) {
     val userProfile by userViewModel.userProfile.collectAsState()
     val scrollState = rememberScrollState()
+    var selectedWellness by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
@@ -107,12 +111,31 @@ fun DashboardScreen(
         Text("Log Wellness", fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurface, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("Healthy", "Sick", "Nauseated").forEach { state ->
+            val wellnessOptions = listOf(
+                Triple("Healthy", 5, "😊"),
+                Triple("Sick", 1, "🤒"),
+                Triple("Nauseated", 2, "🤢")
+            )
+            wellnessOptions.forEach { (label, moodValue, emoji) ->
+                val isSelected = selectedWellness == label
                 ElevatedFilterChip(
-                    selected = false,
-                    onClick = { /* TODO Local State for Mood */ },
-                    label = { Text(state) },
+                    selected = isSelected,
+                    onClick = {
+                        selectedWellness = label
+                        userProfile?.let { profile ->
+                            featuresViewModel.addMood(
+                                userId = profile.userId,
+                                coupleId = profile.coupleId ?: "",
+                                moodValue = moodValue,
+                                emoji = emoji,
+                                note = "Feeling $label"
+                            )
+                        }
+                    },
+                    label = { Text(label) },
                     colors = FilterChipDefaults.elevatedFilterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
                         labelColor = MaterialTheme.colorScheme.onSurfaceVariant
                     ),

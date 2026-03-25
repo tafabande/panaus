@@ -72,6 +72,19 @@ class UserViewModel(private val repository: UserRepository = UserRepository()) :
         _pairingState.value = PairingState.Idle
     }
 
+    private val _isSavingProfile = MutableStateFlow(false)
+    val isSavingProfile: StateFlow<Boolean> = _isSavingProfile.asStateFlow()
+
+    fun updateProfile(name: String) {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        if (name.isBlank()) return
+        viewModelScope.launch {
+            _isSavingProfile.value = true
+            repository.updateProfile(currentUserId, name)
+            _isSavingProfile.value = false
+        }
+    }
+
     fun logout() {
         FirebaseAuth.getInstance().signOut()
     }

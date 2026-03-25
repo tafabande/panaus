@@ -86,4 +86,13 @@ class UserRepository {
             Result.failure(e)
         }
     }
+
+    suspend fun updateProfile(userId: String, name: String): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            db.collection("users").document(userId).update("name", name.trim()).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
