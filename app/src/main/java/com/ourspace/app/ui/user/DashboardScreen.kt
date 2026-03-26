@@ -46,6 +46,8 @@ fun DashboardScreen(
     userViewModel: UserViewModel,
     featuresViewModel: FeaturesViewModel,
     onNavigateToAnalytics: () -> Unit,
+    onNavigateToMood: () -> Unit,
+    onNavigateToMemories: () -> Unit,
     profileTheme: Color = MaterialTheme.colorScheme.primary
 ) {
     val userProfile by userViewModel.userProfile.collectAsState()
@@ -84,7 +86,7 @@ fun DashboardScreen(
         ) {
             Column {
                 Text(
-                    text = "Aura Amour",
+                    text = "HoneyBee",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
@@ -133,7 +135,10 @@ fun DashboardScreen(
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             // My Status
             Card(
-                modifier = Modifier.weight(1f).height(140.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(140.dp)
+                    .clickable { onNavigateToMood() },
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
@@ -243,6 +248,60 @@ fun DashboardScreen(
                     ),
                     shape = RoundedCornerShape(16.dp)
                 )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        // Aura Memories / Journey Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp)
+                .clickable { onNavigateToMemories() },
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                // Background decor
+                Text(
+                    "✨", 
+                    fontSize = 80.sp, 
+                    modifier = Modifier.align(Alignment.BottomEnd).offset(x = 20.dp, y = 20.dp).alpha(0.1f)
+                )
+                
+                Column(modifier = Modifier.padding(24.dp)) {
+                    Text(
+                        "Our Journey", 
+                        fontSize = 14.sp, 
+                        color = MaterialTheme.colorScheme.primary, 
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "AURA MEMORIES", 
+                        fontSize = 24.sp, 
+                        fontWeight = FontWeight.Bold, 
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "View Album", 
+                            fontSize = 14.sp, 
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            Icons.Default.ArrowForward, 
+                            contentDescription = null, 
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
             }
         }
 

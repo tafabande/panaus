@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
+import android.util.Log
 
 class FeaturesRepository {
     private val db = FirebaseFirestore.getInstance()
@@ -226,7 +227,9 @@ class FeaturesRepository {
     suspend fun uploadMemory(coupleId: String, memory: Memory, localUri: android.net.Uri) = withContext(Dispatchers.IO) {
         try {
             val storage = com.google.firebase.storage.FirebaseStorage.getInstance()
-            val fileName = "memories/$coupleId/${System.currentTimeMillis()}.jpg"
+            // Sanitize coupleId and path
+            val folder = if (coupleId.isNotBlank()) coupleId else memory.userId
+            val fileName = "memories/$folder/${System.currentTimeMillis()}.jpg"
             val fileRef = storage.reference.child(fileName)
             
             // Upload to Storage
@@ -235,11 +238,59 @@ class FeaturesRepository {
             
             // Save to Firestore
             val finalMemory = memory.copy(imageUrl = downloadUrl, status = "UPLOADED")
-            db.collection("couples").document(coupleId)
+            val targetCoupleId = if (coupleId.isNotBlank()) coupleId else "unknown" 
+            
+            db.collection("couples").document(targetCoupleId)
                 .collection("memories").document(finalMemory.id)
                 .set(finalMemory, SetOptions.merge()).await()
         } catch (e: Exception) {
+            Log.e("FeaturesRepository", "Upload failed: ${e.message}", e)
             throw e
+        }
+    }
+
+    suspend fun saveRelationshipEvent(event: RelationshipEvent): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val docRef = if (event.id.isEmpty()) {
+                db.collection("couples").document(event.coupleId).collection("relationship_history").document()
+            } else {
+                db.collection("couples").document(event.coupleId).collection("relationship_history").document(event.id)
+            }
+            val finalEvent = event.copy(id = docRef.id)
+            docRef.set(finalEvent, SetOptions.merge()).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    fun getRelationshipEvents(coupleId: String): Flow<List<RelationshipEvent>> = callbackFlow {
+        if (coupleId.isEmpty()) {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+        val listener = db.collection("couples").document(coupleId).collection("relationship_history")
+            .orderBy("date")
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.e("FeaturesRepository", "Error observing relationship events", e)
+                    return@addSnapshotListener
+                }
+                val events = snapshot?.documents?.mapNotNull { doc ->
+                    doc.toObject(RelationshipEvent::class.java)?.apply { id = doc.id }
+                } ?: emptyList()
+                trySend(events)
+            }
+        awaitClose { listener.remove() }
+    }
+
+    suspend fun deleteRelationshipEvent(coupleId: String, eventId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            db.collection("couples").document(coupleId).collection("relationship_history").document(eventId).delete().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 

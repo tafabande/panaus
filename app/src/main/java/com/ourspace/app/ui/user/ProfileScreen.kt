@@ -63,6 +63,14 @@ fun ProfileScreen(
     
     var isEditMode by remember { mutableStateOf(false) }
 
+    val photoPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            userViewModel.uploadProfilePicture(uri)
+        }
+    }
+
     val snackbarHostState = remember { SnackbarHostState() }
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
@@ -143,8 +151,23 @@ fun ProfileScreen(
                         AsyncImage(
                             model = userProfile?.avatarUrl ?: "https://api.dicebear.com/7.x/thumbs/png?seed=${userProfile?.userId}",
                             contentDescription = "Profile Picture",
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clickable(enabled = isEditMode) {
+                                    photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                },
                             contentScale = ContentScale.Crop
+                        )
+                    }
+                    
+                    if (isEditMode) {
+                        Text(
+                            text = "Tap to Change",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(top = 4.dp).clickable {
+                                photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            }
                         )
                     }
                     

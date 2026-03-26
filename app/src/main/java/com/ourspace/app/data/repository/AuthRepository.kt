@@ -29,9 +29,41 @@ class AuthRepository {
         }
     }
 
-    suspend fun register(name: String, email: String, pass: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun getEmailByUsername(username: String): String? = withContext(Dispatchers.IO) {
         return@withContext try {
-            Log.d(TAG, "Attempting registration for: $email")
+            val snapshot = db.collection("users")
+                .whereEqualTo("username", username.lowercase().trim())
+                .get()
+                .await()
+            snapshot.documents.firstOrNull()?.getString("email")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to get email by username: $username", e)
+            null
+        }
+    }
+
+    suspend fun isUsernameUnique(username: String): Boolean = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val snapshot = db.collection("users")
+                .whereEqualTo("username", username.lowercase().trim())
+                .get()
+                .await()
+            snapshot.isEmpty
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to check username uniqueness: $username", e)
+            false
+        }
+    }
+
+    suspend fun register(name: String, username: String, email: String, pass: String): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            Log.d(TAG, "Attempting registration for: $email (Username: $username)")
+            
+            // Check username uniqueness first
+            if (!isUsernameUnique(username)) {
+                return@withContext Result.failure(Exception("Username already exists"))
+            }
+
             val result = auth.createUserWithEmailAndPassword(email, pass).await()
             val userId = result.user?.uid ?: throw Exception("User ID is null")
             Log.d(TAG, "Auth user created: $userId. Generating partner code...")
@@ -42,6 +74,7 @@ class AuthRepository {
             val userProfile = UserProfile(
                 userId = userId,
                 name = name,
+                username = username.lowercase().trim(),
                 email = email,
                 partnerId = null,
                 coupleId = null,
@@ -59,6 +92,7 @@ class AuthRepository {
             Result.failure(e)
         }
     }
+
 
     private suspend fun generateUniquePartnerCode(): String {
         var code: String

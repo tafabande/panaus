@@ -10,6 +10,8 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import android.util.Log
+import com.google.firebase.storage.FirebaseStorage
+import android.net.Uri
 
 private const val TAG = "UserRepository"
 
@@ -122,6 +124,28 @@ class UserRepository {
         }
     }
 
+    suspend fun uploadProfilePicture(userId: String, localUri: Uri): Result<String> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val storage = FirebaseStorage.getInstance()
+            val fileName = "profiles/$userId/pfp_${System.currentTimeMillis()}.jpg"
+            val fileRef = storage.reference.child(fileName)
+            
+            Log.d("UserRepository", "Uploading PFP to: $fileName from Uri: $localUri")
+            
+            // Upload
+            fileRef.putFile(localUri).await()
+            val downloadUrl = fileRef.downloadUrl.await().toString()
+            
+            // Update Firestore
+            db.collection("users").document(userId).update("avatarUrl", downloadUrl).await()
+            
+            Result.success(downloadUrl)
+        } catch (e: Exception) {
+            Log.e("UserRepository", "Failed to upload profile picture for $userId", e)
+            Result.failure(e)
+        }
+    }
+
     suspend fun unlinkPartner(currentUserId: String, partnerId: String, coupleId: String): Result<Unit> = withContext(Dispatchers.IO) {
         return@withContext try {
             // Remove couple document
@@ -226,5 +250,50 @@ class UserRepository {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    suspend fun searchUsers(query: String, currentUserId: String): Result<List<UserProfile>> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            if (query.length < 3) return@withContext Result.success(emptyList())
+
+            val results = db.collection("users")
+                .whereEqualTo("isDiscoverable", true)
+                .get()
+                .await()
+
+            val users = results.toObjects(UserProfile::class.java)
+                .filter { user ->
+                    user.userId != currentUserId && 
+                    (user.name.contains(query, ignoreCase = true) || 
+                     user.email.contains(query, ignoreCase = true))
+                }
+
+            Result.success(users)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun addTimelineEvent(event: com.ourspace.app.data.model.TimelineEvent): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val docRef = db.collection("timeline").document()
+            val eventWithId = event.copy(id = docRef.id)
+            docRef.set(eventWithId).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    fun observeTimelineEvents(coupleId: String): Flow<List<com.ourspace.app.data.model.TimelineEvent>> = callbackFlow {
+        val listener = db.collection("timeline")
+            .whereEqualTo("coupleId", coupleId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) { close(error); return@addSnapshotListener }
+                val events = snapshot?.toObjects(com.ourspace.app.data.model.TimelineEvent::class.java) ?: emptyList()
+                // Sort by date manually if we don't have indexes yet
+                trySend(events.sortedByDescending { it.date })
+            }
+        awaitClose { listener.remove() }
     }
 }

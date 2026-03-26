@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import com.ourspace.app.util.GlobalErrorHandler
+import com.google.android.gms.tasks.Task
+import kotlinx.coroutines.tasks.await
 import android.util.Log
 
 private const val TAG = "UserViewModel"
@@ -30,7 +32,7 @@ sealed class PairingState {
 }
 
 class UserViewModel(application: Application, private val repository: UserRepository) : AndroidViewModel(application) {
-    private val prefs = application.getSharedPreferences("aura_amour_prefs", Context.MODE_PRIVATE)
+    private val prefs = application.getSharedPreferences("honeybee_prefs", Context.MODE_PRIVATE)
 
     private val _themePreference = MutableStateFlow(prefs.getString("theme_pref", "SYSTEM") ?: "SYSTEM")
     val themePreference: StateFlow<String> = _themePreference.asStateFlow()
@@ -183,9 +185,50 @@ class UserViewModel(application: Application, private val repository: UserReposi
         }
     }
 
+    fun uploadProfilePicture(uri: android.net.Uri) {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        viewModelScope.launch {
+            _isSavingProfile.value = true
+            val result = repository.uploadProfilePicture(currentUserId, uri)
+            result.onFailure { GlobalErrorHandler.recordException(it) }
+            _isSavingProfile.value = false
+        }
+    }
+
     fun setTheme(theme: String) {
         prefs.edit().putString("theme_pref", theme).apply()
         _themePreference.value = theme
+    }
+
+    private val _timelineEvents = MutableStateFlow<List<com.ourspace.app.data.model.TimelineEvent>>(emptyList())
+    val timelineEvents: StateFlow<List<com.ourspace.app.data.model.TimelineEvent>> = _timelineEvents.asStateFlow()
+
+    private var timelineJob: kotlinx.coroutines.Job? = null
+
+    fun startObservingTimeline() {
+        val coupleId = _userProfile.value?.coupleId ?: return
+        timelineJob?.cancel()
+        timelineJob = viewModelScope.launch {
+            repository.observeTimelineEvents(coupleId).collect {
+                _timelineEvents.value = it
+            }
+        }
+    }
+
+    fun addTimelineEvent(name: String, date: String, description: String, category: String = "MILESTONE") {
+        val coupleId = _userProfile.value?.coupleId ?: return
+        val event = com.ourspace.app.data.model.TimelineEvent(
+            name = name,
+            date = date,
+            description = description,
+            category = category,
+            coupleId = coupleId
+        )
+        viewModelScope.launch {
+            _isSavingProfile.value = true
+            repository.addTimelineEvent(event)
+            _isSavingProfile.value = false
+        }
     }
 
     fun unlinkPartner() {
@@ -201,6 +244,44 @@ class UserViewModel(application: Application, private val repository: UserReposi
                 onSuccess = { _pairingState.value = PairingState.Idle },
                 onFailure = { _pairingState.value = PairingState.Error(it.message ?: "Unlinking failed") }
             )
+        }
+    }
+
+    private val _searchResults = MutableStateFlow<List<UserProfile>>(emptyList())
+    val searchResults: StateFlow<List<UserProfile>> = _searchResults.asStateFlow()
+
+    fun performSearch(query: String) {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        if (query.length < 3) {
+            _searchResults.value = emptyList()
+            return
+        }
+        viewModelScope.launch {
+            val result = repository.searchUsers(query, currentUserId)
+            result.onSuccess { _searchResults.value = it }
+        }
+    }
+
+    fun sendPairingRequestToId(partnerId: String) {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        _pairingState.value = PairingState.Loading
+        viewModelScope.launch {
+            // We need a way to send request by ID directly.
+            // For now, I'll reuse the logic from sendPairingRequest but with ID
+            val requestId = listOf(currentUserId, partnerId).sorted().joinToString("_")
+            val requestData = hashMapOf(
+                "fromId" to currentUserId,
+                "toId" to partnerId,
+                "status" to "PENDING",
+                "createdAt" to com.ourspace.app.data.util.DateUtils.getCurrentIsoTime()
+            )
+            try {
+                com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                    .collection("pairingRequests").document(requestId).set(requestData).await()
+                _pairingState.value = PairingState.RequestSent("User found via search")
+            } catch (e: Exception) {
+                _pairingState.value = PairingState.Error(e.message ?: "Failed to send request")
+            }
         }
     }
 

@@ -7,6 +7,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -226,7 +228,7 @@ fun PairingScreen(
                             color = Color(0xFF1E293B)
                         )
                         Text(
-                            text = "Allow partners to pair with your code",
+                            text = "Allow partners to search for you",
                             fontSize = 12.sp,
                             color = Color(0xFF64748B)
                         )
@@ -244,6 +246,62 @@ fun PairingScreen(
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
+
+                // --- SEARCH SECTION ---
+                var searchQuery by remember { mutableStateOf("") }
+                val searchResults by viewModel.searchResults.collectAsState()
+
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { 
+                        searchQuery = it
+                        viewModel.performSearch(it)
+                    },
+                    label = { Text("Search by Name or Email") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    leadingIcon = { Icon(androidx.compose.material.icons.Icons.Filled.Search, contentDescription = null) },
+                    singleLine = true
+                )
+
+                if (searchResults.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Column(Modifier.padding(8.dp)) {
+                            searchResults.forEach { result ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { viewModel.sendPairingRequestToId(result.userId) }
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = result.name,
+                                        modifier = Modifier.weight(1f),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Connect",
+                                        color = Color(0xFFF43F5E),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                // ----------------------
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(text = "OR USE CODE", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
                     value = partnerCode,

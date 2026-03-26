@@ -8,12 +8,12 @@ import com.ourspace.app.data.model.*
 import com.ourspace.app.data.repository.FeaturesRepository
 import com.ourspace.app.data.util.DateUtils
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import com.ourspace.app.util.GlobalErrorHandler
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class FeaturesViewModel(
     private val repository: FeaturesRepository,
@@ -49,6 +49,29 @@ class FeaturesViewModel(
 
     private val _partnerMood = MutableStateFlow<Mood?>(null)
     val partnerMood: StateFlow<Mood?> = _partnerMood.asStateFlow()
+
+    private val _relationshipEvents = MutableStateFlow<List<RelationshipEvent>>(emptyList())
+    val relationshipEvents: StateFlow<List<RelationshipEvent>> = _relationshipEvents.asStateFlow()
+
+    val combinedTimeline: StateFlow<List<TimelineItem>> = combine(
+        memories,
+        relationshipEvents,
+        events
+    ) { memories, relEvents, calEvents ->
+        val items = mutableListOf<TimelineItem>()
+        
+        // Add Memories
+        memories.forEach { items.add(TimelineItem.Photo(it)) }
+        
+        // Add Relationship Events
+        relEvents.forEach { items.add(TimelineItem.Relationship(it)) }
+        
+        // Add Anniversaries from Calendar
+        calEvents.filter { it.category.contains("Anniversary", ignoreCase = true) || it.title.contains("Anniversary", ignoreCase = true) }
+            .forEach { items.add(TimelineItem.Anniversary(it)) }
+            
+        items.sortedByDescending { it.sortDate }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _songSuggestions = MutableStateFlow<List<com.ourspace.app.data.api.SongResult>>(emptyList())
     val songSuggestions: StateFlow<List<com.ourspace.app.data.api.SongResult>> = _songSuggestions.asStateFlow()
@@ -121,15 +144,10 @@ class FeaturesViewModel(
                 .collect { _memories.value = it }
         }
 
-        // Observe partner mood
-        val partnerId = userProfile.partnerId ?: ""
-        if (partnerId.isNotEmpty()) {
-            partnerMoodJob?.cancel()
-            partnerMoodJob = viewModelScope.launch {
-                repository.observePartnerMood(coupleId, partnerId)
-                    .catch { e -> GlobalErrorHandler.recordException(e) }
-                    .collect { _partnerMood.value = it }
-            }
+        viewModelScope.launch {
+            repository.getRelationshipEvents(coupleId)
+                .catch { e -> GlobalErrorHandler.recordException(e) }
+                .collect { _relationshipEvents.value = it }
         }
     }
 
@@ -334,20 +352,44 @@ class FeaturesViewModel(
         }
     }
 
-    fun searchSongs(query: String) {
+    fun saveRelationshipEvent(event: RelationshipEvent) {
         viewModelScope.launch {
-            if (query.length < 2) {
-                _songSuggestions.value = emptyList()
-                return@launch
-            }
             try {
-                val results = musicRepository.searchSongs(query)
-                _songSuggestions.value = results
+                repository.saveRelationshipEvent(event)
             } catch (e: Exception) {
-                android.util.Log.e("FeaturesViewModel", "Song search failed for query: $query", e)
-                _songSuggestions.value = emptyList()
                 GlobalErrorHandler.recordException(e)
             }
         }
+    }
+
+    fun deleteRelationshipEvent(coupleId: String, eventId: String) {
+        viewModelScope.launch {
+            try {
+                repository.deleteRelationshipEvent(coupleId, eventId)
+            } catch (e: Exception) {
+                GlobalErrorHandler.recordException(e)
+            }
+        }
+    }
+}
+
+sealed class TimelineItem {
+    data class Relationship(val event: RelationshipEvent) : TimelineItem()
+    data class Photo(val memory: Memory) : TimelineItem()
+    data class Anniversary(val event: CalendarEvent) : TimelineItem()
+    
+    val sortDate: String get() = when(this) {
+        is Relationship -> event.date
+        is Photo -> {
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+            sdf.format(Date(memory.timestamp))
+        }
+        is Anniversary -> event.date
+    }
+
+    val displayDate: String get() = when(this) {
+        is Relationship -> event.date
+        is Photo -> DateUtils.formatDateTime(memory.timestamp)
+        is Anniversary -> event.date
     }
 }

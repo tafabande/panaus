@@ -25,7 +25,7 @@ sealed class BottomNavItem(var title: String, var icon: androidx.compose.ui.grap
     object Notes : BottomNavItem("Notes", Icons.Default.Email, "notes")
     object Calendar : BottomNavItem("Calendar", Icons.Default.DateRange, "calendar")
     object Game : BottomNavItem("Play", Icons.Default.Star, "game")
-    object Memories : BottomNavItem("Memories", Icons.Default.PhotoAlbum, "memories")
+    object Timeline : BottomNavItem("Timeline", Icons.Default.History, "timeline")
     object Profile : BottomNavItem("Profile", Icons.Default.Person, "profile")
 }
 
@@ -43,7 +43,7 @@ fun MainScreen(
         BottomNavItem.Notes,
         BottomNavItem.Calendar,
         BottomNavItem.Game,
-        BottomNavItem.Memories,
+        BottomNavItem.Timeline,
         BottomNavItem.Profile
     )
 
@@ -105,6 +105,8 @@ fun MainScreen(
                     userViewModel = userViewModel,
                     featuresViewModel = featuresViewModel,
                     onNavigateToAnalytics = { navController.navigate("analytics") },
+                    onNavigateToMood = { navController.navigate("mood") },
+                    onNavigateToMemories = { navController.navigate("memories") },
                     profileTheme = AuraColors.fromName(userProfile?.profileTheme)
                 )
             }
@@ -129,7 +131,23 @@ fun MainScreen(
                     onBack = { navController.popBackStack() }
                 )
             }
-            composable(BottomNavItem.Memories.route) {
+            composable(BottomNavItem.Timeline.route) {
+                TimelineScreen(
+                    viewModel = featuresViewModel,
+                    onAddEvent = { navController.navigate("edit_relationship") },
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable("edit_relationship") {
+                userProfile?.coupleId?.let { coupleId ->
+                    EditRelationshipScreen(
+                        coupleId = coupleId,
+                        viewModel = featuresViewModel,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+            }
+            composable("memories") {
                 MemoriesScreen(
                     userProfile = userProfile,
                     viewModel = featuresViewModel,

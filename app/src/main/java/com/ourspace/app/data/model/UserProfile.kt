@@ -7,7 +7,9 @@ import com.google.firebase.firestore.PropertyName
 data class UserProfile(
     val userId: String = "",
     val name: String = "",
+    val username: String? = null,
     val email: String = "",
+
     val partnerId: String? = null,
     val coupleId: String? = null,
     val createdAt: String = "",

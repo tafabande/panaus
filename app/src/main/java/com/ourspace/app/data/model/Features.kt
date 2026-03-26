@@ -75,6 +75,16 @@ data class Memory(
     val status: String = "UPLOADED" // UPLOADED, SENDING, FAILED
 )
 
+data class RelationshipEvent(
+    var id: String = "",
+    val coupleId: String = "",
+    val title: String = "",
+    val description: String = "",
+    val date: String = "", // yyyy-MM-dd
+    val timestamp: Long = System.currentTimeMillis(),
+    val category: String = "Milestone" // Milestone, Anniversary, Journey, Memory
+)
+
 data class QuizResponse(
     var id: String = "",
     val quizId: String = "", // e.g., "OUR_STORY"

@@ -79,7 +79,7 @@ class MainActivity : ComponentActivity() {
             firebaseAppCheck.installAppCheckProviderFactory(
                 DebugAppCheckProviderFactory.getInstance()
             )
-            android.util.Log.d("MainActivity", "Firebase and App Check initialized successfully")
+            android.util.Log.d("MainActivity", "Firebase and App Check initialized with Debug provider. Check logs for debug token and register it in Firebase Console.")
         } catch (e: Exception) {
             android.util.Log.e("MainActivity", "Firebase initialization failed: ${e.message}")
         }
@@ -167,7 +167,7 @@ class MainActivity : ComponentActivity() {
 
                         LaunchedEffect(userProfile, hasShownOfflineMessage) {
                             if (userProfile == null && !hasShownOfflineMessage) {
-                                delay(180000) // 180-second failure handler (per new requirements)
+                                delay(15000) // 15-second failure handler (reduced from 180s for better UX)
                                 if (userProfile == null) {
                                     val result = snackbarHostState.showSnackbar(
                                         message = "Data load is taking longer than expected. Using offline mode.",

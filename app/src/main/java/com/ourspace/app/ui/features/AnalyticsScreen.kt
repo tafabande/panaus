@@ -3,11 +3,12 @@ package com.ourspace.app.ui.features
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,6 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ourspace.app.data.model.UserProfile
+import com.ourspace.app.ui.features.FeaturesViewModel
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun AnalyticsScreen(
@@ -24,12 +28,27 @@ fun AnalyticsScreen(
     viewModel: FeaturesViewModel,
     onBack: () -> Unit = {}
 ) {
-    // Suppress unused warnings since these are passed for architecture consistency
-    val _up = userProfile
-    val _vm = viewModel
-    val _ob = onBack
-
+    val memories by viewModel.memories.collectAsState()
+    val events by viewModel.events.collectAsState()
+    
     val scrollState = rememberScrollState()
+
+    // Calculate Days Together
+    val daysTogether = userProfile?.anniversary?.let { anniv ->
+        try {
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+            val annivDate = sdf.parse(anniv)
+            val diff = System.currentTimeMillis() - (annivDate?.time ?: System.currentTimeMillis())
+            val days = diff / (1000 * 60 * 60 * 24)
+            if (days < 0) "0" else String.format("%,d", days)
+        } catch (e: Exception) { "0" }
+    } ?: "0"
+
+    // Upcoming Dates Count
+    val upcomingDates = events.filter { 
+        it.category.contains("Date", ignoreCase = true) || 
+        it.title.contains("Date", ignoreCase = true) 
+    }.size.toString()
 
     Column(
         modifier = Modifier
@@ -68,7 +87,7 @@ fun AnalyticsScreen(
             ) {
                 Text("Our Journey", fontSize = 14.sp, color = MaterialTheme.colorScheme.tertiary, fontFamily = FontFamily.Serif, letterSpacing = 1.sp)
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("1,248", fontSize = 48.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontFamily = FontFamily.Serif)
+                Text(daysTogether, fontSize = 48.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontFamily = FontFamily.Serif)
                 Text("Days Together", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
             }
         }
@@ -99,8 +118,8 @@ fun AnalyticsScreen(
         Text("Love Metrics", fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurface, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            MetricCard("342", "Shared Memories", Modifier.weight(1f))
-            MetricCard("12", "Upcoming Dates", Modifier.weight(1f))
+            MetricCard(memories.size.toString(), "Shared Memories", Modifier.weight(1f))
+            MetricCard(upcomingDates, "Upcoming Dates", Modifier.weight(1f))
         }
 
         Spacer(modifier = Modifier.height(100.dp)) // Cushion for NavBar

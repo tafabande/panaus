@@ -103,7 +103,7 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Email") },
+                    label = { Text("Email or Username") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -111,6 +111,7 @@ fun LoginScreen(
                         unfocusedBorderColor = Color(0xFFFFE4E6) // rose-100
                     )
                 )
+
 
                 Spacer(modifier = Modifier.height(16.dp))
 

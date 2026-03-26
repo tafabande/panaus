@@ -20,9 +20,20 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
-    fun login(email: String, pass: String) {
+    fun login(identifier: String, pass: String) {
         _authState.value = AuthState.Loading
         viewModelScope.launch {
+            val email = if (identifier.contains("@")) {
+                identifier
+            } else {
+                repository.getEmailByUsername(identifier)
+            }
+
+            if (email == null) {
+                _authState.value = AuthState.Error("User not found with this username")
+                return@launch
+            }
+
             val result = repository.login(email, pass)
             result.fold(
                 onSuccess = { _authState.value = AuthState.Success },
@@ -34,14 +45,14 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
         }
     }
 
-    fun register(name: String, email: String, pass: String) {
-        if (name.isBlank()) {
-            _authState.value = AuthState.Error("Name is required")
+    fun register(name: String, username: String, email: String, pass: String) {
+        if (name.isBlank() || username.isBlank() || email.isBlank() || pass.isBlank()) {
+            _authState.value = AuthState.Error("All fields are required")
             return
         }
         _authState.value = AuthState.Loading
         viewModelScope.launch {
-            val result = repository.register(name, email, pass)
+            val result = repository.register(name, username, email, pass)
             result.fold(
                 onSuccess = { _authState.value = AuthState.Success },
                 onFailure = { 
@@ -51,6 +62,7 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
             )
         }
     }
+
 
     fun resetState() {
         _authState.value = AuthState.Idle
