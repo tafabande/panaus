@@ -9,10 +9,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
@@ -38,7 +38,7 @@ val REQUEST_TYPES = listOf(
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AsksScreen(
-    userProfile: UserProfile,
+    userProfile: UserProfile?,
     viewModel: FeaturesViewModel,
     onBack: () -> Unit
 ) {
@@ -141,16 +141,20 @@ fun AsksScreen(
                             Button(
                                 onClick = {
                                     val finalSendText = if (requestType == "Custom") requestText.trim() else requestType
-                                    viewModel.addAsk(
-                                        coupleId = userProfile.coupleId ?: "",
-                                        fromUserId = userProfile.userId,
-                                        toUserId = userProfile.partnerId ?: "",
-                                        text = finalSendText,
-                                        type = requestType
-                                    )
-                                    requestText = ""
-                                    requestType = "Call me"
-                                    showForm = false
+                                    userProfile?.let { profile ->
+                                        viewModel.addAsk(
+                                            coupleId = profile.coupleId ?: "",
+                                            fromUserId = profile.userId,
+                                            toUserId = profile.partnerId ?: "",
+                                            text = finalSendText,
+                                            type = requestType
+                                        )
+                                        requestText = ""
+                                        requestType = "Call me"
+                                        showForm = false
+                                    } ?: run {
+                                        com.ourspace.app.util.GlobalErrorHandler.showMessage("Cannot send request while offline/loading")
+                                    }
                                 },
                                 enabled = !isCustomEmpty,
                                 modifier = Modifier.fillMaxWidth().height(50.dp),
@@ -170,7 +174,7 @@ fun AsksScreen(
                         modifier = Modifier.fillMaxWidth().padding(top = 40.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(Icons.Filled.Send, contentDescription = "No requests", tint = Color(0xFFFFE4E6), modifier = Modifier.size(48.dp))
+                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "No requests", tint = Color(0xFFFFE4E6), modifier = Modifier.size(48.dp))
                         Spacer(modifier = Modifier.height(16.dp))
                         Text("No requests currently.", color = Color(0xFF94A3B8), fontSize = 14.sp)
                     }
@@ -178,7 +182,7 @@ fun AsksScreen(
             }
 
             items(asks, key = { it.id }) { ask ->
-                val amIReceiver = ask.toUserId == userProfile.userId
+                val amIReceiver = ask.toUserId == userProfile?.userId
                 val isPending = ask.status == "pending"
 
                 val statusColor = when (ask.status) {
@@ -220,7 +224,7 @@ fun AsksScreen(
                                         imageVector = when(ask.status) {
                                             "accepted" -> Icons.Filled.CheckCircle
                                             "declined" -> Icons.Filled.Cancel
-                                            else -> Icons.Filled.DateRange
+                                            else -> Icons.Default.DateRange
                                         },
                                         contentDescription = ask.status,
                                         tint = statusColor,
@@ -238,7 +242,7 @@ fun AsksScreen(
 
                         if (isPending) {
                             Spacer(modifier = Modifier.height(16.dp))
-                            Divider(color = Color(0xFFF1F5F9))
+                            HorizontalDivider(color = Color(0xFFF1F5F9))
                             Spacer(modifier = Modifier.height(12.dp))
                             
                             if (amIReceiver) {

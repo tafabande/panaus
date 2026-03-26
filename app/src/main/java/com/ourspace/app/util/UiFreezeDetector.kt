@@ -1,7 +1,7 @@
 package com.ourspace.app.util
 
 import android.view.Choreographer
-import com.google.firebase.crashlytics.FirebaseCrashlytics
+
 
 class UiFreezeDetector : Choreographer.FrameCallback {
 
@@ -22,7 +22,8 @@ class UiFreezeDetector : Choreographer.FrameCallback {
             if (deltaNanos > freezeThresholdNanos) {
                 val freezeMs = deltaNanos / 1_000_000L
                 val exception = RuntimeException("Severe UI Freeze detected: skipped frames for $freezeMs ms")
-                FirebaseCrashlytics.getInstance().recordException(exception)
+                // Freeze detected, but Crashlytics is disabled
+                // GlobalErrorHandler.recordException(exception)
                 
                 // Optionally let the user know their device froze for a moment
                 // GlobalErrorHandler.recordException(exception, "UI paused for ${freezeMs}ms executing slow code.")

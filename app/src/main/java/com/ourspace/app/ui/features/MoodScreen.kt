@@ -35,7 +35,7 @@ val MOODS = listOf(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MoodScreen(
-    userProfile: UserProfile,
+    userProfile: UserProfile?,
     viewModel: FeaturesViewModel,
     onBack: () -> Unit
 ) {
@@ -113,16 +113,20 @@ fun MoodScreen(
                         
                         Button(
                             onClick = {
-                                selectedMood?.let {
-                                    viewModel.addMood(
-                                        userId = userProfile.userId,
-                                        coupleId = userProfile.coupleId ?: "",
-                                        moodValue = it.value,
-                                        emoji = it.emoji,
-                                        note = note
-                                    )
-                                    selectedMood = null
-                                    note = ""
+                                selectedMood?.let { moodOption ->
+                                    userProfile?.let { profile ->
+                                        viewModel.addMood(
+                                            userId = profile.userId,
+                                            coupleId = profile.coupleId ?: "",
+                                            moodValue = moodOption.value,
+                                            emoji = moodOption.emoji,
+                                            note = note
+                                        )
+                                        selectedMood = null
+                                        note = ""
+                                    } ?: run {
+                                        com.ourspace.app.util.GlobalErrorHandler.showMessage("Cannot log mood while offline/loading")
+                                    }
                                 }
                             },
                             enabled = selectedMood != null,
@@ -172,7 +176,7 @@ fun MoodScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                     Text(
-                                        text = if (mood.userId == userProfile.userId) "You" else "Partner",
+                                        text = if (mood.userId == userProfile?.userId) "You" else "Partner",
                                         fontWeight = FontWeight.Medium,
                                         fontSize = 14.sp,
                                         color = Color(0xFF1E293B)

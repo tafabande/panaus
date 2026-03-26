@@ -30,7 +30,7 @@ import kotlin.random.Random
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MemoriesScreen(
-    userProfile: UserProfile,
+    userProfile: UserProfile?,
     viewModel: FeaturesViewModel,
     onBack: () -> Unit = {}
 ) {

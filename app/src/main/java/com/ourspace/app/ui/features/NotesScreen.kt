@@ -28,7 +28,7 @@ private val onSurfaceColor = Color(0xFF2e2f2d)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesScreen(
-    userProfile: UserProfile,
+    userProfile: UserProfile?,
     viewModel: FeaturesViewModel,
     onBack: () -> Unit
 ) {
@@ -82,13 +82,17 @@ fun NotesScreen(
                     IconButton(
                         onClick = {
                             if (newMessage.isNotBlank()) {
-                                viewModel.sendNote(
-                                    coupleId = userProfile.coupleId ?: "",
-                                    senderId = userProfile.userId,
-                                    receiverId = userProfile.partnerId,
-                                    content = newMessage
-                                )
-                                newMessage = ""
+                                userProfile?.let { profile ->
+                                    viewModel.sendNote(
+                                        coupleId = profile.coupleId ?: "",
+                                        senderId = profile.userId,
+                                        receiverId = profile.partnerId,
+                                        content = newMessage
+                                    )
+                                    newMessage = ""
+                                } ?: run {
+                                    com.ourspace.app.util.GlobalErrorHandler.showMessage("Cannot send note while offline/loading")
+                                }
                             }
                         },
                         modifier = Modifier
@@ -124,7 +128,7 @@ fun NotesScreen(
                 }
             } else {
                 items(notes, key = { it.id }) { note ->
-                    val isMe = note.senderId == userProfile.userId
+                    val isMe = note.senderId == userProfile?.userId
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start

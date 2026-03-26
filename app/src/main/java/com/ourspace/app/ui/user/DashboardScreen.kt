@@ -22,6 +22,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
 import com.ourspace.app.ui.features.FeaturesViewModel
 
 @Composable
@@ -42,6 +44,13 @@ fun DashboardScreen(
             .padding(24.dp)
             .verticalScroll(scrollState)
     ) {
+        if (userProfile == null) {
+            LinearProgressIndicator(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                trackColor = Color.Transparent
+            )
+        }
         // App Top Bar / Header
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp, top = 8.dp),
@@ -63,13 +72,23 @@ fun DashboardScreen(
                     fontFamily = FontFamily.SansSerif
                 )
             }
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-            ) {
-                // Profile Avatar placeholder
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onNavigateToAnalytics) {
+                    Icon(
+                        imageVector = Icons.Filled.BarChart,
+                        contentDescription = "Analytics",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                ) {
+                    // Profile Avatar placeholder
+                }
             }
         }
 

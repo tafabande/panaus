@@ -14,6 +14,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -38,10 +39,18 @@ import com.ourspace.app.ui.user.PairingScreen
 import com.ourspace.app.ui.user.UserViewModel
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.Button
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.remember
 import com.ourspace.app.util.GlobalErrorHandler
 import com.ourspace.app.util.UiFreezeDetector
 import com.ourspace.app.ui.theme.OurSpaceTheme
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     private val freezeDetector = UiFreezeDetector()
@@ -123,11 +132,28 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     composable("main_flow") {
-                        if (userProfile == null) {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text("Loading Data...")
+                        val snackbarHostState = remember { SnackbarHostState() }
+                        var hasShownOfflineMessage by remember { mutableStateOf(false) }
+
+                        LaunchedEffect(userProfile, hasShownOfflineMessage) {
+                            if (userProfile == null && !hasShownOfflineMessage) {
+                                delay(60000) // 1-minute failure handler
+                                if (userProfile == null) {
+                                    val result = snackbarHostState.showSnackbar(
+                                        message = "Data load is taking longer than expected. Using offline mode.",
+                                        actionLabel = "Retry",
+                                        duration = SnackbarDuration.Long
+                                    )
+                                    if (result == SnackbarResult.ActionPerformed) {
+                                        hasShownOfflineMessage = false // Reset to retry
+                                    } else {
+                                        hasShownOfflineMessage = true
+                                    }
+                                }
                             }
-                        } else if (userProfile?.coupleId == null && !hasSkippedPairing) {
+                        }
+
+                        if (userProfile?.coupleId == null && !hasSkippedPairing && userProfile != null) {
                             PairingScreen(
                                 onLogout = {
                                     navController.navigate("login") {
@@ -141,9 +167,10 @@ class MainActivity : ComponentActivity() {
                                 viewModel = userViewModel
                             )
                         } else {
+                            // Always show MainScreen shell while authenticated
                             com.ourspace.app.ui.MainScreen(
                                 rootNavController = navController,
-                                userProfile = userProfile!!,
+                                userProfile = userProfile,
                                 userViewModel = userViewModel,
                                 featuresViewModel = featuresViewModel
                             )
@@ -160,53 +187,43 @@ class MainActivity : ComponentActivity() {
                     }
                     
                     composable("notes") {
-                        if (userProfile != null) {
-                            NotesScreen(
-                                userProfile = userProfile!!,
-                                viewModel = featuresViewModel,
-                                onBack = { navController.popBackStack() }
-                            )
-                        }
+                        NotesScreen(
+                            userProfile = userProfile,
+                            viewModel = featuresViewModel,
+                            onBack = { navController.popBackStack() }
+                        )
                     }
                     
                     composable("todos") {
-                        if (userProfile != null) {
-                            TodosScreen(
-                                userProfile = userProfile!!,
-                                viewModel = featuresViewModel,
-                                onBack = { navController.popBackStack() }
-                            )
-                        }
+                        TodosScreen(
+                            userProfile = userProfile,
+                            viewModel = featuresViewModel,
+                            onBack = { navController.popBackStack() }
+                        )
                     }
                     
                     composable("calendar") {
-                        if (userProfile != null) {
-                            CalendarScreen(
-                                userProfile = userProfile!!,
-                                viewModel = featuresViewModel,
-                                onBack = { navController.popBackStack() }
-                            )
-                        }
+                        CalendarScreen(
+                            userProfile = userProfile,
+                            viewModel = featuresViewModel,
+                            onBack = { navController.popBackStack() }
+                        )
                     }
 
                     composable("moods") {
-                        if (userProfile != null) {
-                            MoodScreen(
-                                userProfile = userProfile!!,
-                                viewModel = featuresViewModel,
-                                onBack = { navController.popBackStack() }
-                            )
-                        }
+                        MoodScreen(
+                            userProfile = userProfile,
+                            viewModel = featuresViewModel,
+                            onBack = { navController.popBackStack() }
+                        )
                     }
                     
                     composable("asks") {
-                        if (userProfile != null) {
-                            AsksScreen(
-                                userProfile = userProfile!!,
-                                viewModel = featuresViewModel,
-                                onBack = { navController.popBackStack() }
-                            )
-                        }
+                        AsksScreen(
+                            userProfile = userProfile,
+                            viewModel = featuresViewModel,
+                            onBack = { navController.popBackStack() }
+                        )
                     }
 
 
@@ -214,7 +231,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-    }
+}
 
     override fun onDestroy() {
         super.onDestroy()

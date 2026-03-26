@@ -33,14 +33,14 @@ import com.ourspace.app.data.model.UserProfile
 @Composable
 fun ProfileScreen(
     onLogout: () -> Unit,
-    userProfile: UserProfile,
+    userProfile: UserProfile?,
     userViewModel: UserViewModel
 ) {
     val scrollState = rememberScrollState()
     val isSaving by userViewModel.isSavingProfile.collectAsState()
 
     // Local state for editable fields
-    var editName by remember(userProfile.name) { mutableStateOf(userProfile.name) }
+    var editName by remember(userProfile?.name) { mutableStateOf(userProfile?.name ?: "") }
     var isEditMode by remember { mutableStateOf(false) }
 
     // Avatar URI picked locally (not yet uploaded to storage)
@@ -116,7 +116,7 @@ fun ProfileScreen(
                         )
                     } else {
                         Text(
-                            text = userProfile.name.take(1).uppercase(),
+                            text = userProfile?.name?.take(1)?.uppercase() ?: "?",
                             fontSize = 48.sp,
                             color = MaterialTheme.colorScheme.primary,
                             fontFamily = FontFamily.Serif
@@ -192,7 +192,7 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = userProfile.email,
+                value = userProfile?.email ?: "",
                 onValueChange = {},
                 label = { Text("Email") },
                 readOnly = true,

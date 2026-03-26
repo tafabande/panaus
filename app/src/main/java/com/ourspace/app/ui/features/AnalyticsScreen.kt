@@ -20,10 +20,15 @@ import com.ourspace.app.data.model.UserProfile
 
 @Composable
 fun AnalyticsScreen(
-    userProfile: UserProfile,
+    userProfile: UserProfile?,
     viewModel: FeaturesViewModel,
     onBack: () -> Unit = {}
 ) {
+    // Suppress unused warnings since these are passed for architecture consistency
+    val _up = userProfile
+    val _vm = viewModel
+    val _ob = onBack
+
     val scrollState = rememberScrollState()
 
     Column(

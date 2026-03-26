@@ -26,7 +26,7 @@ import com.ourspace.app.data.model.UserProfile
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodosScreen(
-    userProfile: UserProfile,
+    userProfile: UserProfile?,
     viewModel: FeaturesViewModel,
     onBack: () -> Unit
 ) {
@@ -92,13 +92,13 @@ fun TodosScreen(
                                     label = { Text("Anyone") }
                                 )
                                 FilterChip(
-                                    selected = assignedTo == userProfile.userId,
-                                    onClick = { assignedTo = userProfile.userId },
+                                    selected = assignedTo == userProfile?.userId,
+                                    onClick = { assignedTo = userProfile?.userId ?: "unassigned" },
                                     label = { Text("Me") }
                                 )
                                 FilterChip(
-                                    selected = assignedTo == userProfile.partnerId,
-                                    onClick = { assignedTo = userProfile.partnerId ?: "unassigned" },
+                                    selected = assignedTo == userProfile?.partnerId,
+                                    onClick = { assignedTo = userProfile?.partnerId ?: "unassigned" },
                                     label = { Text("Partner") }
                                 )
                             }
@@ -106,15 +106,19 @@ fun TodosScreen(
                             Button(
                                 onClick = {
                                     if (title.isNotBlank()) {
-                                        viewModel.addTodo(
-                                            coupleId = userProfile.coupleId ?: "",
-                                            creatorId = userProfile.userId,
-                                            title = title,
-                                            assignedTo = assignedTo
-                                        )
-                                        title = ""
-                                        assignedTo = "unassigned"
-                                        showForm = false
+                                        userProfile?.let { profile ->
+                                            viewModel.addTodo(
+                                                coupleId = profile.coupleId ?: "",
+                                                creatorId = profile.userId,
+                                                title = title,
+                                                assignedTo = assignedTo
+                                            )
+                                            title = ""
+                                            assignedTo = "unassigned"
+                                            showForm = false
+                                        } ?: run {
+                                            com.ourspace.app.util.GlobalErrorHandler.showMessage("Cannot add task while offline/loading")
+                                        }
                                     }
                                 },
                                 modifier = Modifier.fillMaxWidth(),
@@ -158,7 +162,7 @@ fun TodosScreen(
                             Text(todo.title, fontSize = 14.sp, color = Color(0xFF1E293B))
                             if (todo.assignedTo != "unassigned") {
                                 Text(
-                                    text = if (todo.assignedTo == userProfile.userId) "ME" else "PARTNER",
+                                    text = if (todo.assignedTo == userProfile?.userId) "ME" else "PARTNER",
                                     color = Color(0xFFF43F5E),
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold

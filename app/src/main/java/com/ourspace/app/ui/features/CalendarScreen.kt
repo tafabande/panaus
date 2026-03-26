@@ -27,7 +27,7 @@ private val onSurfaceColor = Color(0xFF2e2f2d)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarScreen(
-    userProfile: UserProfile,
+    userProfile: UserProfile?,
     viewModel: FeaturesViewModel,
     onBack: () -> Unit
 ) {
@@ -139,18 +139,22 @@ fun CalendarScreen(
                                 Button(
                                     onClick = {
                                         if (title.isNotBlank() && date.isNotBlank()) {
-                                            viewModel.addEvent(
-                                                coupleId = userProfile.coupleId ?: "",
-                                                creatorId = userProfile.userId,
-                                                title = title,
-                                                date = date,
-                                                time = time,
-                                                category = category
-                                            )
-                                            title = ""
-                                            date = ""
-                                            time = ""
-                                            showForm = false
+                                            userProfile?.let { profile ->
+                                                viewModel.addEvent(
+                                                    coupleId = profile.coupleId ?: "",
+                                                    creatorId = profile.userId,
+                                                    title = title,
+                                                    date = date,
+                                                    time = time,
+                                                    category = category
+                                                )
+                                                title = ""
+                                                date = ""
+                                                time = ""
+                                                showForm = false
+                                            } ?: run {
+                                                com.ourspace.app.util.GlobalErrorHandler.showMessage("Cannot save event while offline/loading")
+                                            }
                                         }
                                     },
                                     modifier = Modifier.weight(1f),

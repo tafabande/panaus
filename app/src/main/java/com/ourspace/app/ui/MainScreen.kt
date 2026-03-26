@@ -31,7 +31,7 @@ sealed class BottomNavItem(var title: String, var icon: androidx.compose.ui.grap
 @Composable
 fun MainScreen(
     rootNavController: NavHostController,
-    userProfile: UserProfile,
+    userProfile: UserProfile?,
     userViewModel: UserViewModel,
     featuresViewModel: FeaturesViewModel
 ) {
@@ -105,18 +105,32 @@ fun MainScreen(
                 )
             }
             composable(BottomNavItem.Notes.route) {
-                // To be re-styled later
-                NotesScreen(userProfile = userProfile, viewModel = featuresViewModel, onBack = {})
+                NotesScreen(
+                    userProfile = userProfile,
+                    viewModel = featuresViewModel,
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable(BottomNavItem.Calendar.route) {
-                // To be re-styled later
-                CalendarScreen(userProfile = userProfile, viewModel = featuresViewModel, onBack = {})
+                CalendarScreen(
+                    userProfile = userProfile,
+                    viewModel = featuresViewModel,
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable(BottomNavItem.Game.route) {
-                GameScreen(userProfile = userProfile, viewModel = featuresViewModel)
+                GameScreen(
+                    userProfile = userProfile,
+                    viewModel = featuresViewModel,
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable(BottomNavItem.Memories.route) {
-                MemoriesScreen(userProfile = userProfile, viewModel = featuresViewModel)
+                MemoriesScreen(
+                    userProfile = userProfile,
+                    viewModel = featuresViewModel,
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable(BottomNavItem.Profile.route) {
                 ProfileScreen(
@@ -130,7 +144,32 @@ fun MainScreen(
                 )
             }
             composable("analytics") {
-                AnalyticsScreen(userProfile = userProfile, viewModel = featuresViewModel)
+                AnalyticsScreen(
+                    userProfile = userProfile,
+                    viewModel = featuresViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("asks") {
+                AsksScreen(
+                    userProfile = userProfile,
+                    viewModel = featuresViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("todos") {
+                TodosScreen(
+                    userProfile = userProfile,
+                    viewModel = featuresViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("mood") {
+                MoodScreen(
+                    userProfile = userProfile,
+                    viewModel = featuresViewModel,
+                    onBack = { navController.popBackStack() }
+                )
             }
         }
     }

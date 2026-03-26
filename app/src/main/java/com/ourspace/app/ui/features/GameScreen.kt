@@ -75,8 +75,9 @@ data class GameContent(val title: String, val questions: List<String>)
 
 @Composable
 fun GameScreen(
-    userProfile: UserProfile,
-    viewModel: FeaturesViewModel
+    userProfile: UserProfile?,
+    viewModel: FeaturesViewModel,
+    onBack: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
