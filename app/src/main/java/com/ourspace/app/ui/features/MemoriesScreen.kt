@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.ourspace.app.data.model.UserProfile
+import com.ourspace.app.ui.components.EmptyState
+import androidx.compose.material.icons.filled.PhotoLibrary
 import kotlin.random.Random
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,7 +34,7 @@ import kotlin.random.Random
 fun MemoriesScreen(
     userProfile: UserProfile?,
     viewModel: FeaturesViewModel,
-    onBack: () -> Unit = {}
+    onBack: () -> Unit
 ) {
     val memories by viewModel.memories.collectAsState()
     val optimisticMemories by viewModel.optimisticMemories.collectAsState()
@@ -85,20 +87,12 @@ fun MemoriesScreen(
         }
     ) { innerPadding ->
         if (allMemories.isEmpty()) {
-            // Show placeholder grid while no photos chosen
-            LazyVerticalStaggeredGrid(
-                columns = StaggeredGridCells.Fixed(2),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = 16.dp),
-                verticalItemSpacing = 16.dp,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(10) { index ->
-                    MemoryItemPlaceholder(index)
-                }
-            }
+            EmptyState(
+                icon = Icons.Default.PhotoLibrary,
+                title = "No Memories Yet",
+                description = "Tap the + button to start building your shared album.",
+                modifier = Modifier.padding(top = 40.dp)
+            )
         } else {
             // Show real picked photos in full staggered grid
             LazyVerticalStaggeredGrid(

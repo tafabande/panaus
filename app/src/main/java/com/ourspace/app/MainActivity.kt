@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -73,9 +74,9 @@ class MainActivity : ComponentActivity() {
         try {
             FirebaseApp.initializeApp(this)
             val firebaseAppCheck = FirebaseAppCheck.getInstance()
+            // Using DebugAppCheckProviderFactory for development environment
             firebaseAppCheck.installAppCheckProviderFactory(
-                if (BuildConfig.DEBUG) DebugAppCheckProviderFactory.getInstance()
-                else PlayIntegrityAppCheckProviderFactory.getInstance()
+                DebugAppCheckProviderFactory.getInstance()
             )
             android.util.Log.d("MainActivity", "Firebase and App Check initialized successfully")
         } catch (e: Exception) {
@@ -181,7 +182,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                        if (userProfile != null && !(userProfile?.hasCompletedSetup ?: false)) {
+                        if (userProfile != null && !(userProfile?.isSetupComplete ?: false)) {
                             com.ourspace.app.ui.user.ProfileSetupScreen(
                                 userViewModel = userViewModel,
                                 onSetupComplete = {

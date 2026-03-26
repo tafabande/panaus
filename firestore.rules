@@ -57,86 +57,114 @@ service cloud.firestore {
       );
       allow update: if isMemberOfCouple(coupleId) && 
         isImmutable('user1Id') && isImmutable('user2Id');
+
+      // --- Subcollections ---
+      
+      match /notes/{noteId} {
+        allow read: if isMemberOfCouple(coupleId);
+        allow create: if isMemberOfCouple(coupleId) && 
+          request.resource.data.coupleId == coupleId &&
+          request.resource.data.senderId == request.auth.uid &&
+          isValidString(request.resource.data.content, 10000);
+        allow update: if isMemberOfCouple(coupleId) && 
+          resource.data.senderId == request.auth.uid &&
+          isImmutable('senderId') && isImmutable('coupleId');
+        allow delete: if isMemberOfCouple(coupleId) && 
+          resource.data.senderId == request.auth.uid;
+      }
+
+      match /memories/{memoryId} {
+        allow read: if isMemberOfCouple(coupleId);
+        allow create, update: if isMemberOfCouple(coupleId) && 
+          request.resource.data.coupleId == coupleId &&
+          (resource == null || isImmutable('coupleId'));
+        allow delete: if isMemberOfCouple(coupleId) && 
+          resource.data.userId == request.auth.uid;
+      }
+
+      match /quizzes/{quizId} {
+        allow read: if isMemberOfCouple(coupleId);
+        allow create, update: if isMemberOfCouple(coupleId) && 
+          (request.resource.data.userId == request.auth.uid);
+      }
     }
 
-    // Common pattern for shared features (Moods, Notes, Events, etc.)
+    // Common pattern for shared features in TOP-LEVEL collections (filtered by coupleId)
     function canAccessSharedItem() {
       return isMemberOfCouple(resource.data.coupleId);
     }
     
-    function canModifySharedItem() {
+    function canCreateSharedItem() {
       return isMemberOfCouple(request.resource.data.coupleId) &&
-             (resource == null || isImmutable('coupleId')) &&
              (request.resource.data.userId == request.auth.uid || 
               request.resource.data.senderId == request.auth.uid ||
               request.resource.data.fromUserId == request.auth.uid ||
               request.resource.data.createdBy == request.auth.uid);
     }
 
-    match /moods/{id} {
-      allow read: if canAccessSharedItem();
-      allow create: if canModifySharedItem() && request.resource.data.moodValue is number;
-      allow update: if canModifySharedItem() && isImmutable('userId');
+    function canUpdateSharedItem() {
+      return isMemberOfCouple(resource.data.coupleId) &&
+             isMemberOfCouple(request.resource.data.coupleId) &&
+             isImmutable('coupleId') &&
+             (resource.data.userId == request.auth.uid || 
+              resource.data.senderId == request.auth.uid ||
+              resource.data.fromUserId == request.auth.uid ||
+              resource.data.createdBy == request.auth.uid);
     }
 
-    match /notes/{id} {
+    match /moods/{id} {
       allow read: if canAccessSharedItem();
-      allow create: if canModifySharedItem() && isValidString(request.resource.data.content, 10000);
-      allow update: if canModifySharedItem() && isImmutable('senderId');
+      allow create: if canCreateSharedItem() && request.resource.data.moodValue is number;
+      allow update: if canUpdateSharedItem() && (isImmutable('userId') || isImmutable('senderId'));
+      allow delete: if canUpdateSharedItem();
     }
 
     match /events/{id} {
       allow read: if canAccessSharedItem();
-      allow create: if canModifySharedItem() && isValidString(request.resource.data.title, 500);
-      allow update: if canModifySharedItem() && isImmutable('createdBy');
+      allow create: if canCreateSharedItem() && isValidString(request.resource.data.title, 500);
+      allow update: if canUpdateSharedItem() && isImmutable('createdBy');
+      allow delete: if canUpdateSharedItem();
     }
 
     match /asks/{id} {
       allow read: if canAccessSharedItem();
-      // Creator can create
-      allow create: if canModifySharedItem() && isValidString(request.resource.data.requestText, 2000);
+      allow create: if canCreateSharedItem() && isValidString(request.resource.data.requestText, 2000);
+      
       // Recipient can update status/response
-      allow update: if canAccessSharedItem() && 
+      allow update: if isMemberOfCouple(resource.data.coupleId) && 
         request.auth.uid == resource.data.toUserId &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'responseText', 'respondedAt']);
-      // Creator can update content before response
-      allow update: if canModifySharedItem() && 
+      
+      // Creator can update content before response or delete
+      allow update: if canUpdateSharedItem() && 
         resource.data.status == 'pending' &&
         isImmutable('fromUserId') && isImmutable('toUserId');
+        
+      allow delete: if canUpdateSharedItem() && resource.data.status == 'pending';
     }
 
     match /todos/{id} {
       allow read: if canAccessSharedItem();
-      allow create: if canModifySharedItem() && isValidString(request.resource.data.title, 500);
-      allow update: if canAccessSharedItem() && isMemberOfCouple(request.resource.data.coupleId);
+      allow create: if canCreateSharedItem() && isValidString(request.resource.data.title, 500);
+      allow update: if isMemberOfCouple(resource.data.coupleId) && isMemberOfCouple(request.resource.data.coupleId);
+      allow delete: if canUpdateSharedItem();
     }
 
     match /interactions/{id} {
       allow read: if canAccessSharedItem();
-      allow create: if canModifySharedItem();
+      allow create: if canCreateSharedItem();
       // Recipient can mark as read
-      allow update: if canAccessSharedItem() && 
+      allow update: if isMemberOfCouple(resource.data.coupleId) && 
+        request.auth.uid != resource.data.senderId &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
-    }
-
-    match /photos/{id} {
-      allow read: if canAccessSharedItem();
-      allow create, update: if canModifySharedItem();
+      allow delete: if canUpdateSharedItem();
     }
 
     match /locationShares/{id} {
       allow read: if canAccessSharedItem();
-      allow create, update: if canModifySharedItem();
-    }
-
-    match /updates/{id} {
-      allow read: if canAccessSharedItem();
-      allow create, update: if canModifySharedItem();
-    }
-    
-    match /memories/{id} {
-      allow read: if canAccessSharedItem();
-      allow create, update: if canModifySharedItem();
+      allow create: if canCreateSharedItem();
+      allow update: if canUpdateSharedItem();
+      allow delete: if canUpdateSharedItem();
     }
   }
 }

@@ -1,40 +1,43 @@
 package com.ourspace.app.ui.user
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BarChart
-import com.ourspace.app.data.model.Interaction
-import com.ourspace.app.ui.features.FeaturesViewModel
-import com.ourspace.app.data.util.DateUtils
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.Canvas
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.ourspace.app.data.model.Interaction
+import com.ourspace.app.data.model.UserProfile
+import com.ourspace.app.data.util.DateUtils
+import com.ourspace.app.ui.components.EmptyState
+import com.ourspace.app.ui.features.FeaturesViewModel
+import com.ourspace.app.ui.theme.AuraColors
 import kotlin.random.Random
 
 @Composable
@@ -107,20 +110,19 @@ fun DashboardScreen(
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                val userColor = com.ourspace.app.ui.theme.AuraColors.fromName(userProfile?.themeColor)
                 Box(
                     modifier = Modifier
                         .size(48.dp)
-                        .border(2.dp, userColor, CircleShape)
+                        .border(2.dp, AuraColors.fromName(userProfile?.profileTheme), CircleShape)
                         .padding(2.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primaryContainer)
                 ) {
-                    com.ourspace.app.ui.components.AsyncImage(
+                    AsyncImage(
                         model = userProfile?.avatarUrl ?: "https://api.dicebear.com/7.x/thumbs/png?seed=${userProfile?.userId}",
                         contentDescription = "Profile",
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = androidx.compose.layout.ContentScale.Crop
+                        contentScale = ContentScale.Crop
                     )
                 }
             }
@@ -192,11 +194,28 @@ fun DashboardScreen(
         // Logging Mood Row
         Text("Log Wellness", fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurface, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             val wellnessOptions = listOf(
-                Triple("Healthy", 5, "😊"),
-                Triple("Sick", 1, "🤒"),
-                Triple("Nauseated", 2, "🤢")
+                Triple("Devastated", 1, "😭"),
+                Triple("Sad", 2, "😢"),
+                Triple("Low", 3, "😔"),
+                Triple("Neutral", 4, "😐"),
+                Triple("Good", 5, "🙂"),
+                Triple("Happy", 6, "😊"),
+                Triple("Great", 7, "😁"),
+                Triple("Loved", 8, "😍"),
+                Triple("Amazing", 9, "🤩"),
+                Triple("Tired", 10, "😴"),
+                Triple("Annoyed", 11, "😤"),
+                Triple("Angry", 12, "😡"),
+                Triple("Sick", 13, "🤒"),
+                Triple("Nauseated", 14, "🤢"),
+                Triple("Healthy", 15, "💪")
             )
             wellnessOptions.forEach { (label, moodValue, emoji) ->
                 val isSelected = selectedWellness == label
@@ -238,23 +257,44 @@ fun DashboardScreen(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
-                // Activity Row 1
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(modifier = Modifier.size(12.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary))
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text("Coffee Date at The Local", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
-                        Text("Yesterday", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                // Activity Row 2
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(modifier = Modifier.size(12.dp).clip(CircleShape).background(MaterialTheme.colorScheme.tertiary))
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text("Long Walk in the Park", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
-                        Text("Sunday", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                val recentInteractions = interactions
+                    .filter { it.senderId != userProfile?.userId }
+                    .sortedByDescending { it.timestamp }
+                    .take(5)
+
+                if (recentInteractions.isEmpty()) {
+                    Text(
+                        "No recent activity to show.",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                } else {
+                    recentInteractions.forEachIndexed { index, interaction ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            val color = when(interaction.type) {
+                                "poke" -> MaterialTheme.colorScheme.primary
+                                "hug" -> MaterialTheme.colorScheme.secondary
+                                "kiss" -> MaterialTheme.colorScheme.tertiary
+                                else -> MaterialTheme.colorScheme.primary
+                            }
+                            Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(color))
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                val partnerName = partnerProfile?.name ?: "Partner"
+                                val action = when(interaction.type) {
+                                    "poke" -> "sent you a poke 👉"
+                                    "hug" -> "sent you a hug 🤗"
+                                    "kiss" -> "sent you a kiss 💋"
+                                    else -> "interacted with you"
+                                }
+                                Text("$partnerName $action", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
+                                Text(DateUtils.formatRelativeTime(interaction.timestamp), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                        if (index < recentInteractions.size - 1) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
                     }
                 }
             }
