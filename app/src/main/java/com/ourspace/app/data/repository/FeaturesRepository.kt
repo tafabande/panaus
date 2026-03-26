@@ -59,6 +59,10 @@ class FeaturesRepository {
     suspend fun updateMood(mood: Mood) {
         db.collection("moods").document(mood.userId)
             .set(mood, SetOptions.merge()).await()
+            
+        // Also update the user's current mood in their profile for dashboard visibility
+        db.collection("users").document(mood.userId)
+            .update("mood", "${mood.emoji} ${mood.note}".trim()).await()
     }
 
     // --- Todos ---

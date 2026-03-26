@@ -1,5 +1,5 @@
 package com.ourspace.app.ui.user
-
+import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -138,7 +138,10 @@ fun DashboardScreen(
                 modifier = Modifier
                     .weight(1f)
                     .height(140.dp)
-                    .clickable { onNavigateToMood() },
+                    .clickable { 
+                        Log.d("DashboardScreen", "Navigating to Mood")
+                        onNavigateToMood() 
+                    },
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
@@ -193,6 +196,7 @@ fun DashboardScreen(
                             
                             TextButton(
                                 onClick = {
+                                    Log.d("DashboardScreen", "Sending interaction: $type")
                                     userProfile?.let { u ->
                                         featuresViewModel.sendInteraction(u.coupleId ?: "", u.userId, type)
                                     }
@@ -271,7 +275,10 @@ fun DashboardScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(160.dp)
-                .clickable { onNavigateToMemories() },
+                .clickable { 
+                    Log.d("DashboardScreen", "Navigating to Memories")
+                    onNavigateToMemories() 
+                },
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
         ) {

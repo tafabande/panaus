@@ -1,6 +1,7 @@
 package com.ourspace.app.ui.features
 
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -81,6 +82,7 @@ fun MemoriesScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
+                    Log.d("MemoriesScreen", "Launching photo picker")
                     photoPicker.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                     )
