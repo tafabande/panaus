@@ -25,6 +25,9 @@ class UserViewModel(private val repository: UserRepository = UserRepository()) :
     private val _userProfile = MutableStateFlow<UserProfile?>(null)
     val userProfile: StateFlow<UserProfile?> = _userProfile.asStateFlow()
 
+    private val _partnerProfile = MutableStateFlow<UserProfile?>(null)
+    val partnerProfile: StateFlow<UserProfile?> = _partnerProfile.asStateFlow()
+
     private val _pairingState = MutableStateFlow<PairingState>(PairingState.Idle)
     val pairingState: StateFlow<PairingState> = _pairingState.asStateFlow()
 
@@ -32,6 +35,7 @@ class UserViewModel(private val repository: UserRepository = UserRepository()) :
     val hasSkippedPairing: StateFlow<Boolean> = _hasSkippedPairing.asStateFlow()
 
     private var observerJob: Job? = null
+    private var partnerObserverJob: Job? = null
 
     init {
         FirebaseAuth.getInstance().addAuthStateListener { auth ->
@@ -52,6 +56,24 @@ class UserViewModel(private val repository: UserRepository = UserRepository()) :
                 .catch { e -> GlobalErrorHandler.recordException(e) }
                 .collectLatest { profile ->
                     _userProfile.value = profile
+                    if (profile?.partnerId != null) {
+                        observePartner(profile.partnerId)
+                    } else {
+                        partnerObserverJob?.cancel()
+                        _partnerProfile.value = null
+                    }
+                }
+        }
+    }
+
+    private fun observePartner(partnerId: String) {
+        if (partnerObserverJob?.isActive == true && _partnerProfile.value?.userId == partnerId) return
+        partnerObserverJob?.cancel()
+        partnerObserverJob = viewModelScope.launch {
+            repository.observeUser(partnerId)
+                .catch { e -> GlobalErrorHandler.recordException(e) }
+                .collectLatest { profile ->
+                    _partnerProfile.value = profile
                 }
         }
     }
@@ -97,6 +119,36 @@ class UserViewModel(private val repository: UserRepository = UserRepository()) :
             val result = repository.updateProfile(currentUserId, name)
             result.onFailure { GlobalErrorHandler.recordException(it) }
             _isSavingProfile.value = false
+        }
+    }
+
+    fun updateExtendedProfile(updates: Map<String, Any?>) {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        viewModelScope.launch {
+            _isSavingProfile.value = true
+            val result = repository.updateExtendedProfile(currentUserId, updates)
+            result.onFailure { GlobalErrorHandler.recordException(it) }
+            _isSavingProfile.value = false
+        }
+    }
+
+    fun setTheme(theme: String) {
+        updateExtendedProfile(mapOf("themePreference" to theme))
+    }
+
+    fun unlinkPartner() {
+        val user = _userProfile.value ?: return
+        val currentUserId = user.userId
+        val partnerId = user.partnerId ?: return
+        val coupleId = user.coupleId ?: return
+
+        viewModelScope.launch {
+            _pairingState.value = PairingState.Loading
+            val result = repository.unlinkPartner(currentUserId, partnerId, coupleId)
+            result.fold(
+                onSuccess = { _pairingState.value = PairingState.Idle },
+                onFailure = { _pairingState.value = PairingState.Error(it.message ?: "Unlinking failed") }
+            )
         }
     }
 

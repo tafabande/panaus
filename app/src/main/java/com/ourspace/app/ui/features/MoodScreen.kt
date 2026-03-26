@@ -25,11 +25,21 @@ import com.ourspace.app.data.util.DateUtils
 data class MoodOption(val value: Int, val emoji: String, val label: String)
 
 val MOODS = listOf(
-    MoodOption(1, "😢", "Sad"),
-    MoodOption(2, "😐", "Okay"),
-    MoodOption(3, "🙂", "Good"),
-    MoodOption(4, "😁", "Great"),
-    MoodOption(5, "😍", "Amazing")
+    MoodOption(1, "😭", "Devastated"),
+    MoodOption(2, "😢", "Sad"),
+    MoodOption(3, "😔", "Low"),
+    MoodOption(4, "😐", "Neutral"),
+    MoodOption(5, "🙂", "Good"),
+    MoodOption(6, "😊", "Happy"),
+    MoodOption(7, "😁", "Great"),
+    MoodOption(8, "😍", "Loved"),
+    MoodOption(9, "🤩", "Amazing"),
+    MoodOption(10, "😴", "Tired"),
+    MoodOption(11, "😤", "Annoyed"),
+    MoodOption(12, "😡", "Angry"),
+    MoodOption(13, "🤒", "Sick"),
+    MoodOption(14, "🤢", "Nauseated"),
+    MoodOption(15, "💪", "Healthy")
 )
 
 @OptIn(ExperimentalMaterial3Api::class)

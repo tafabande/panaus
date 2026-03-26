@@ -14,6 +14,7 @@ data class TodoItem(
     val coupleId: String = "",
     val title: String = "",
     val assignedTo: String = "",
+    val category: String = "General",
     val isCompleted: Boolean = false,
     val createdBy: String = "",
     val createdAt: String = "",

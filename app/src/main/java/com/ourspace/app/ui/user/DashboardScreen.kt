@@ -25,6 +25,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import com.ourspace.app.ui.features.FeaturesViewModel
+import com.ourspace.app.data.util.DateUtils
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
+import kotlin.random.Random
 
 @Composable
 fun DashboardScreen(
@@ -34,17 +42,22 @@ fun DashboardScreen(
     onNavigateToAnalytics: () -> Unit
 ) {
     val userProfile by userViewModel.userProfile.collectAsState()
+    val partnerProfile by userViewModel.partnerProfile.collectAsState()
     val scrollState = rememberScrollState()
     var selectedWellness by remember { mutableStateOf<String?>(null) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .systemBarsPadding()
-            .padding(24.dp)
-            .verticalScroll(scrollState)
-    ) {
+    val isBirthday = DateUtils.isToday(userProfile?.birthday) || DateUtils.isToday(partnerProfile?.birthday)
+    val isAnniversary = DateUtils.isToday(userProfile?.anniversary)
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .systemBarsPadding()
+                .padding(24.dp)
+                .verticalScroll(scrollState)
+        ) {
         if (userProfile == null) {
             LinearProgressIndicator(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
@@ -107,9 +120,10 @@ fun DashboardScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    val moodText = userProfile?.mood ?: "Peaceful"
                     Text("My Heart", fontSize = 14.sp, color = MaterialTheme.colorScheme.secondary, fontFamily = FontFamily.Serif)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Peaceful", fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    Text(moodText, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.weight(1f))
                     Text("Update >", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
                 }
@@ -122,9 +136,11 @@ fun DashboardScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Their Heart", fontSize = 14.sp, color = MaterialTheme.colorScheme.secondary, fontFamily = FontFamily.Serif)
+                    val partnerMood = partnerProfile?.mood ?: "Joyful"
+                    val partnerName = partnerProfile?.name ?: "Partner"
+                    Text("$partnerName's Art", fontSize = 14.sp, color = MaterialTheme.colorScheme.secondary, fontFamily = FontFamily.Serif)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Joyful", fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    Text(partnerMood, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.weight(1f))
                     Text("Send a hug >", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
                 }
@@ -251,5 +267,74 @@ fun DashboardScreen(
         }
         
         Spacer(modifier = Modifier.height(100.dp)) // NavBar cushion
+    }
+
+    if (isBirthday || isAnniversary) {
+        CelebrationOverlay(
+            title = if (isBirthday) "Happy Birthday! 🎂" else "Happy Anniversary! ❤️",
+            subtitle = if (isBirthday) "Special day for a special someone." else "Another year of love and growth."
+        )
+    }
+}
+}
+
+@Composable
+fun CelebrationOverlay(title: String, subtitle: String) {
+    var visible by remember { mutableStateOf(true) }
+    
+    if (visible) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.4f))
+                .clickable { visible = false },
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = title,
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 18.sp,
+                    color = Color.White.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                Text("Tap to dismiss", color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
+            }
+            
+            RepeatingHearts()
+        }
+    }
+}
+
+@Composable
+fun RepeatingHearts() {
+    val infiniteTransition = rememberInfiniteTransition(label = "hearts")
+    val items = remember { List(15) { Random.nextFloat() } }
+    
+    items.forEachIndexed { index, startDelay ->
+        val yOffset by infiniteTransition.animateFloat(
+            initialValue = -100f,
+            targetValue = 1000f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = 4000, 
+                    delayMillis = (startDelay * 3000).toInt(), 
+                    easing = LinearEasing
+                ),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "heart_y_$index"
+        )
+        
+        Box(modifier = Modifier.offset(x = (index * 40).dp, y = yOffset.dp)) {
+            Text("❤️", fontSize = 24.sp)
+        }
     }
 }

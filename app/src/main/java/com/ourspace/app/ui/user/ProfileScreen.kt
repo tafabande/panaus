@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.ourspace.app.data.model.UserProfile
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     onLogout: () -> Unit,
@@ -38,20 +38,21 @@ fun ProfileScreen(
 ) {
     val scrollState = rememberScrollState()
     val isSaving by userViewModel.isSavingProfile.collectAsState()
+    val pairingState by userViewModel.pairingState.collectAsState()
 
     // Local state for editable fields
     var editName by remember(userProfile?.name) { mutableStateOf(userProfile?.name ?: "") }
+    var birthday by remember(userProfile?.birthday) { mutableStateOf(userProfile?.birthday ?: "") }
+    var anniversary by remember(userProfile?.anniversary) { mutableStateOf(userProfile?.anniversary ?: "") }
+    var foodPrefs by remember(userProfile?.foodPreferences) { mutableStateOf(userProfile?.foodPreferences ?: "") }
+    var colors by remember(userProfile?.favoriteColors) { mutableStateOf(userProfile?.favoriteColors ?: "") }
+    var songs by remember(userProfile?.favoriteSongs) { mutableStateOf(userProfile?.favoriteSongs ?: "") }
+    var aesthetics by remember(userProfile?.aestheticNote) { mutableStateOf(userProfile?.aestheticNote ?: "") }
+    
     var isEditMode by remember { mutableStateOf(false) }
-
-    // Avatar URI picked locally (not yet uploaded to storage)
-    var avatarUri by remember { mutableStateOf<Uri?>(null) }
+    var partnerCodeInput by remember { mutableStateOf("") }
 
     val snackbarHostState = remember { SnackbarHostState() }
-
-    // Photo picker launcher
-    val avatarPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri -> uri?.let { avatarUri = it } }
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -64,255 +65,196 @@ fun ProfileScreen(
                 .verticalScroll(scrollState)
                 .padding(24.dp)
         ) {
-            // Top Bar
+            // Header
             Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp, top = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp, top = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Profile & Settings",
-                    fontSize = 28.sp,
+                    text = "Aura Profile",
+                    fontSize = 32.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
                     fontFamily = FontFamily.Serif
                 )
-                // Settings / Save icon — toggles edit mode or saves
                 IconButton(onClick = {
                     if (isEditMode) {
-                        // Save changes
-                        userViewModel.updateProfile(editName)
+                        // Save all changes
+                        val updates = mapOf(
+                            "name" to editName,
+                            "birthday" to birthday,
+                            "anniversary" to anniversary,
+                            "foodPreferences" to foodPrefs,
+                            "favoriteColors" to colors,
+                            "favoriteSongs" to songs,
+                            "aestheticNote" to aesthetics
+                        )
+                        userViewModel.updateExtendedProfile(updates)
                         isEditMode = false
                     } else {
                         isEditMode = true
                     }
                 }) {
                     Icon(
-                        imageVector = if (isEditMode) Icons.Default.Save else Icons.Default.Settings,
-                        contentDescription = if (isEditMode) "Save Profile" else "Edit Profile",
+                        imageVector = if (isEditMode) Icons.Default.Save else Icons.Default.Edit,
+                        contentDescription = if (isEditMode) "Save" else "Edit",
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
 
-            // Avatar Section
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (avatarUri != null) {
-                        AsyncImage(
-                            model = avatarUri,
-                            contentDescription = "Profile photo",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Text(
-                            text = userProfile?.name?.take(1)?.uppercase() ?: "?",
-                            fontSize = 48.sp,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontFamily = FontFamily.Serif
-                        )
-                    }
-                }
-                // Edit avatar button
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .offset(x = 40.dp, y = (-10).dp)
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary)
-                        .clickable {
-                            avatarPickerLauncher.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                            )
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Default.Edit,
-                        contentDescription = "Edit Avatar",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-
-            if (avatarUri != null) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Photo selected — upload to storage coming soon",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Info Fields
-            Text(
-                "Personal Details", fontSize = 18.sp,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.SemiBold
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = editName,
-                onValueChange = { if (isEditMode) editName = it },
-                label = { Text("Name") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                enabled = isEditMode,
-                trailingIcon = {
-                    if (isEditMode) Icon(Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                    disabledBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                    disabledContainerColor = MaterialTheme.colorScheme.surface,
-                    disabledTextColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = userProfile?.email ?: "",
-                onValueChange = {},
-                label = { Text("Email") },
-                readOnly = true,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            )
-
-            // Edit mode hint
-            if (isEditMode) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    "Tap the save ✓ icon in the top-right to save your changes.",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-            }
-
-            // Save button in-line while editing
-            if (isEditMode) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = {
-                        userViewModel.updateProfile(editName)
-                        isEditMode = false
-                    },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                    enabled = !isSaving && editName.isNotBlank(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    if (isSaving) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary)
-                    } else {
-                        Text("Save Changes", fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Customization
-            Text(
-                "App Customization", fontSize = 18.sp,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.SemiBold
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
+            // Relationship Status / Pairing
+            SectionHeader("Connection")
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        "Select Theme Accent", fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    var selectedAccent by remember { mutableStateOf(0xFF923f5f.toInt()) }
-                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        listOf(0xFF923f5f, 0xFFa52a65, 0xFF6c5a00, 0xFFe28743).forEachIndexed { i, hex ->
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(hex))
-                                    .clickable { selectedAccent = hex.toInt() }
-                            ) {
-                                if (selectedAccent == hex.toInt()) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(Color.Black.copy(alpha = 0.3f), CircleShape),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text("✓", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                                    }
-                                }
+                    if (userProfile?.partnerId != null) {
+                        Text("Linked with Partner", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("You are currently experiencing life together.", fontSize = 14.sp)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { userViewModel.unlinkPartner() },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Unlink Partner")
+                        }
+                    } else {
+                        Text("Not Linked", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.outline)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Share your Aura Code to pair:", fontSize = 12.sp)
+                        Text(
+                            text = userProfile?.userId ?: "...",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 18.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        OutlinedTextField(
+                            value = partnerCodeInput,
+                            onValueChange = { partnerCodeInput = it },
+                            label = { Text("Enter Partner's Code") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = { userViewModel.pairWithPartner(partnerCodeInput) },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = partnerCodeInput.isNotBlank() && pairingState !is PairingState.Loading,
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            if (pairingState is PairingState.Loading) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
+                            } else {
+                                Text("Link Aura")
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        "Accent color selected — dynamic theming coming soon",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            Button(
+            // Appearance / Theme
+            SectionHeader("Aesthetics & Theme")
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ThemeButton("LIGHT", "Light", userProfile?.themePreference == "LIGHT") { userViewModel.setTheme("LIGHT") }
+                ThemeButton("DARK", "Dark", userProfile?.themePreference == "DARK") { userViewModel.setTheme("DARK") }
+                ThemeButton("SYSTEM", "Auto", userProfile?.themePreference == "SYSTEM" || userProfile?.themePreference == null) { userViewModel.setTheme("SYSTEM") }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Knowledge Base / Preferences
+            SectionHeader("The Knowledge Base")
+            ProfileTextField("Full Name", editName, isEditMode) { editName = it }
+            ProfileTextField("Birthday", birthday, isEditMode) { birthday = it }
+            ProfileTextField("Anniversary", anniversary, isEditMode) { anniversary = it }
+            ProfileTextField("Food Preferences", foodPrefs, isEditMode) { foodPrefs = it }
+            ProfileTextField("Favorite Colors", colors, isEditMode) { colors = it }
+            ProfileTextField("Favorite Songs", songs, isEditMode) { songs = it }
+            ProfileTextField("Aesthetic Notes", aesthetics, isEditMode, singleLine = false) { aesthetics = it }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Sign Out
+            TextButton(
                 onClick = {
                     userViewModel.logout()
                     onLogout()
                 },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-                shape = RoundedCornerShape(16.dp)
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
             ) {
-                Text(
-                    "Sign Out",
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Text("Sign Out", fontWeight = FontWeight.Bold)
             }
 
-            Spacer(modifier = Modifier.height(100.dp)) // NavBar Cushion
+            Spacer(modifier = Modifier.height(80.dp))
         }
+    }
+}
+
+@Composable
+fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+        modifier = Modifier.padding(bottom = 8.dp)
+    )
+}
+
+@Composable
+fun RowScope.ThemeButton(value: String, label: String, isSelected: Boolean, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.weight(1f),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+        ),
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+    ) {
+        Text(label, fontSize = 12.sp)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProfileTextField(
+    label: String,
+    value: String,
+    enabled: Boolean,
+    singleLine: Boolean = true,
+    onValueChange: (String) -> Unit
+) {
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.outline, modifier = Modifier.padding(start = 4.dp, bottom = 4.dp))
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = enabled,
+            singleLine = singleLine,
+            maxLines = if (singleLine) 1 else 5,
+            shape = RoundedCornerShape(16.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledContainerColor = Color.Transparent
+            )
+        )
     }
 }

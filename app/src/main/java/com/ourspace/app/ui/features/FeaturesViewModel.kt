@@ -93,7 +93,7 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
         }
     }
 
-    fun addTodo(coupleId: String, creatorId: String, title: String, assignedTo: String) {
+    fun addTodo(coupleId: String, creatorId: String, title: String, assignedTo: String, category: String = "General") {
         if (title.isBlank()) return
         viewModelScope.launch {
             GlobalErrorHandler.runWithCatch {
@@ -101,6 +101,7 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
                     coupleId = coupleId,
                     title = title.trim(),
                     assignedTo = assignedTo,
+                    category = category,
                     isCompleted = false,
                     createdBy = creatorId,
                     createdAt = DateUtils.getCurrentIsoTime(),

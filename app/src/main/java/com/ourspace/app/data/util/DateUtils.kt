@@ -1,6 +1,7 @@
 package com.ourspace.app.data.util
 
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -48,5 +49,26 @@ object DateUtils {
         } catch (e: Exception) {
             "M" to "D"
         }
+    }
+
+    fun isToday(dateString: String?): Boolean {
+        if (dateString.isNullOrBlank()) return false
+        return try {
+            val parser = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+            val date = parser.parse(dateString) ?: return false
+            
+            val today = Calendar.getInstance()
+            val target = Calendar.getInstance().apply { time = date }
+            
+            today.get(Calendar.MONTH) == target.get(Calendar.MONTH) &&
+            today.get(Calendar.DAY_OF_MONTH) == target.get(Calendar.DAY_OF_MONTH)
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun getCurrentDate(): String {
+        val format = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        return format.format(Date())
     }
 }

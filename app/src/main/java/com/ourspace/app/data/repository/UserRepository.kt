@@ -95,4 +95,35 @@ class UserRepository {
             Result.failure(e)
         }
     }
+
+    suspend fun updateExtendedProfile(userId: String, updates: Map<String, Any?>): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            db.collection("users").document(userId).update(updates).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun unlinkPartner(currentUserId: String, partnerId: String, coupleId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            // Remove couple document
+            db.collection("couples").document(coupleId).delete().await()
+
+            // Update both users
+            db.collection("users").document(currentUserId).update(
+                "partnerId", null,
+                "coupleId", null
+            ).await()
+
+            db.collection("users").document(partnerId).update(
+                "partnerId", null,
+                "coupleId", null
+            ).await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

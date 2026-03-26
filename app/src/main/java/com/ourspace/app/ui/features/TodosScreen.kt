@@ -2,9 +2,11 @@ package com.ourspace.app.ui.features
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -35,6 +37,9 @@ fun TodosScreen(
     
     var title by remember { mutableStateOf("") }
     var assignedTo by remember { mutableStateOf("unassigned") }
+    var category by remember { mutableStateOf("General") }
+
+    val categories = listOf("General", "Grocery", "Chore", "Date", "Work")
 
     val activeTodos = remember(todos) { todos.filter { !it.isCompleted } }
     val completedTodos = remember(todos) { todos.filter { it.isCompleted } }
@@ -84,8 +89,9 @@ fun TodosScreen(
                                 shape = RoundedCornerShape(12.dp)
                             )
                             Spacer(modifier = Modifier.height(16.dp))
-                            // Simple assigned select emulation
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                            // Assigned Select
+                            Text("Assign To:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 FilterChip(
                                     selected = assignedTo == "unassigned",
                                     onClick = { assignedTo = "unassigned" },
@@ -102,6 +108,23 @@ fun TodosScreen(
                                     label = { Text("Partner") }
                                 )
                             }
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            // Category Select
+                            Text("Category:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                            Row(
+                                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                categories.forEach { cat ->
+                                    FilterChip(
+                                        selected = category == cat,
+                                        onClick = { category = cat },
+                                        label = { Text(cat) }
+                                    )
+                                }
+                            }
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(
                                 onClick = {
@@ -111,10 +134,12 @@ fun TodosScreen(
                                                 coupleId = profile.coupleId ?: "",
                                                 creatorId = profile.userId,
                                                 title = title,
-                                                assignedTo = assignedTo
+                                                assignedTo = assignedTo,
+                                                category = category
                                             )
                                             title = ""
                                             assignedTo = "unassigned"
+                                            category = "General"
                                             showForm = false
                                         } ?: run {
                                             com.ourspace.app.util.GlobalErrorHandler.showMessage("Cannot add task while offline/loading")
@@ -160,13 +185,21 @@ fun TodosScreen(
                         }
                         Column(modifier = Modifier.weight(1f).padding(horizontal = 8.dp)) {
                             Text(todo.title, fontSize = 14.sp, color = Color(0xFF1E293B))
-                            if (todo.assignedTo != "unassigned") {
-                                Text(
-                                    text = if (todo.assignedTo == userProfile?.userId) "ME" else "PARTNER",
-                                    color = Color(0xFFF43F5E),
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                SuggestionChip(
+                                    onClick = {},
+                                    label = { Text(todo.category, fontSize = 9.sp) },
+                                    modifier = Modifier.height(18.dp)
                                 )
+                                if (todo.assignedTo != "unassigned") {
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = if (todo.assignedTo == userProfile?.userId) "FOR ME" else "FOR PARTNER",
+                                        color = Color(0xFFF43F5E),
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
                         IconButton(onClick = { viewModel.deleteTodo(todo.id) }) {

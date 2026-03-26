@@ -99,7 +99,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            OurSpaceTheme {
+            OurSpaceTheme(themePreference = userProfile?.themePreference ?: "SYSTEM") {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     containerColor = Color.Transparent, // Let the screens handle background
