@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<phenotype-registration xmlns:android="http://schemas.android.com/apk/res/android">
-    <registration
-        android:name="com.google.android.gms.measurement"
-        android:version="1" />
-</phenotype-registration>

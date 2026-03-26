@@ -178,6 +178,39 @@ fun DashboardScreen(
             }
         }
 
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        // Location Placeholder (GMS removal requirement)
+        Text("Location", fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurface, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(16.dp))
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { com.ourspace.app.util.GlobalErrorHandler.showMessage("Still not implemented - upgrade version") },
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f))
+        ) {
+            Row(
+                modifier = Modifier.padding(20.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.secondaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("📍", fontSize = 20.sp)
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text("Real-time Check-in", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
+                    Text("Share your location safely", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(24.dp))
         
         Button(

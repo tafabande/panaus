@@ -20,8 +20,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.google.firebase.FirebaseApp
-import com.google.firebase.appcheck.FirebaseAppCheck
-import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -63,9 +61,6 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(Unit) {
                 withContext(Dispatchers.IO) {
                     FirebaseApp.initializeApp(this@MainActivity)
-                    FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
-                        PlayIntegrityAppCheckProviderFactory.getInstance()
-                    )
                 }
                 isFirebaseReady = true
             }
@@ -221,13 +216,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    composable("location") {
-                        PremiumFeatureScreen(
-                            title = "Location Check-in",
-                            description = "Upgrade to Premium to unlock Location Check-ins. Share coordinates safely with your partner over encrypted, highly-permissioned channels.",
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
+
                 }
             }
         }

@@ -16,6 +16,10 @@ object GlobalErrorHandler {
         _errorEvents.tryEmit(errorMessage)
     }
 
+    fun showMessage(message: String) {
+        _errorEvents.tryEmit(message)
+    }
+
     /**
      * Helper to safely run suspend blocks and report errors.
      */

@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     
-    <queries>
-        <package android:name="com.google.android.gms" />
-    </queries>
-
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -28,10 +24,6 @@
 
         </activity>
 
-        <meta-data
-            android:name="com.google.android.gms.phenotype.registration.xml:com.google.android.gms.measurement"
-            android:resource="@xml/phenotype_registration" />
-
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -48,11 +40,6 @@
 
     <!-- Notification Permission (Required for Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
-    <!-- Geolocation Permissions -->
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 
     <!-- Camera and Storage Permissions -->
     <!-- READ_EXTERNAL_STORAGE is ignored on Android 13+ in favor of READ_MEDIA_IMAGES -->
