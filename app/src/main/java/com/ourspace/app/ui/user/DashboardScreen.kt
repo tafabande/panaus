@@ -49,11 +49,14 @@ fun DashboardScreen(
     val isBirthday = DateUtils.isToday(userProfile?.birthday) || DateUtils.isToday(partnerProfile?.birthday)
     val isAnniversary = DateUtils.isToday(userProfile?.anniversary)
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
                 .systemBarsPadding()
                 .padding(24.dp)
                 .verticalScroll(scrollState)

@@ -90,8 +90,8 @@ fun MainScreen(
                 }
             }
         }
-    ) { innerPadding ->
-        NavHost(navController = navController, startDestination = BottomNavItem.Home.route, modifier = Modifier.padding(innerPadding)) {
+    ) { _ ->
+        NavHost(navController = navController, startDestination = BottomNavItem.Home.route, modifier = Modifier.fillMaxSize()) {
             composable(BottomNavItem.Home.route) {
                 DashboardScreen(
                     onLogout = {
