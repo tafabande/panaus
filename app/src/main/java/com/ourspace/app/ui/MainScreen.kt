@@ -1,6 +1,6 @@
 package com.ourspace.app.ui
 
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -45,6 +45,11 @@ fun MainScreen(
         BottomNavItem.Memories,
         BottomNavItem.Profile
     )
+
+    // Start data observation when profile is loaded
+    LaunchedEffect(userProfile) {
+        userProfile?.let { featuresViewModel.startObserving(it) }
+    }
     
     Scaffold(
         floatingActionButton = {

@@ -142,4 +142,27 @@ class FeaturesRepository {
             "respondedAt", respondedAt
         ).await()
     }
+
+    // --- Interactions (Pokes, Hugs) ---
+    fun observeInteractions(coupleId: String): Flow<List<Interaction>> = callbackFlow {
+        val listener = db.collection("interactions")
+            .whereEqualTo("coupleId", coupleId)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .limit(10)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val interactions = snapshot?.documents?.mapNotNull { doc ->
+                    doc.toObject(Interaction::class.java)?.apply { id = doc.id }
+                } ?: emptyList()
+                trySend(interactions)
+            }
+        awaitClose { listener.remove() }
+    }
+
+    suspend fun sendInteraction(interaction: Interaction) = withContext(Dispatchers.IO) {
+        db.collection("interactions").add(interaction).await()
+    }
 }

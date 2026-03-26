@@ -54,3 +54,11 @@ data class Ask(
     val createdAt: String = "",
     val respondedAt: String? = null
 )
+
+data class Interaction(
+    var id: String = "",
+    val coupleId: String = "",
+    val senderId: String = "",
+    val type: String = "poke", // poke, hug, kiss
+    val createdAt: String = ""
+)

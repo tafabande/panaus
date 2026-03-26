@@ -71,4 +71,23 @@ object DateUtils {
         val format = SimpleDateFormat("yyyy-MM-dd", Locale.US)
         return format.format(Date())
     }
+
+    fun formatRelativeTime(isoString: String): String {
+        return try {
+            val parser = SimpleDateFormat(ISO_FORMAT, Locale.US)
+            parser.timeZone = TimeZone.getTimeZone("UTC")
+            val date = parser.parse(isoString) ?: return ""
+            val now = System.currentTimeMillis()
+            val diff = now - date.time
+
+            when {
+                diff < 60000 -> "just now"
+                diff < 3600000 -> "${diff / 60000}m ago"
+                diff < 86400000 -> "${diff / 3600000}h ago"
+                else -> "${diff / 86400000}d ago"
+            }
+        } catch (e: Exception) {
+            ""
+        }
+    }
 }

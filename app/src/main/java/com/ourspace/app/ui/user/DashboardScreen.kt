@@ -16,14 +16,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
+import com.ourspace.app.data.model.Interaction
 import com.ourspace.app.ui.features.FeaturesViewModel
 import com.ourspace.app.data.util.DateUtils
 import androidx.compose.animation.*
@@ -43,6 +46,7 @@ fun DashboardScreen(
 ) {
     val userProfile by userViewModel.userProfile.collectAsState()
     val partnerProfile by userViewModel.partnerProfile.collectAsState()
+    val interactions by featuresViewModel.interactions.collectAsState()
     val scrollState = rememberScrollState()
     var selectedWellness by remember { mutableStateOf<String?>(null) }
 
@@ -141,11 +145,36 @@ fun DashboardScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     val partnerMood = partnerProfile?.mood ?: "Joyful"
                     val partnerName = partnerProfile?.name ?: "Partner"
+                    val lastInteraction = interactions.firstOrNull { it.senderId != userProfile?.userId }
+                    
                     Text("$partnerName's Art", fontSize = 14.sp, color = MaterialTheme.colorScheme.secondary, fontFamily = FontFamily.Serif)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(partnerMood, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    
+                    if (lastInteraction != null) {
+                        Text(
+                            "Last ${lastInteraction.type}: ${DateUtils.formatRelativeTime(lastInteraction.createdAt)}",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                        )
+                    }
+                    
                     Spacer(modifier = Modifier.weight(1f))
-                    Text("Send a hug >", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(
+                            onClick = {
+                                userProfile?.let { u ->
+                                    featuresViewModel.sendInteraction(u.coupleId ?: "", u.userId, "poke")
+                                }
+                            },
+                        ) {
+                            Text("Poke 👉", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
                 }
             }
         }
@@ -278,6 +307,15 @@ fun DashboardScreen(
             subtitle = if (isBirthday) "Special day for a special someone." else "Another year of love and growth."
         )
     }
+
+    // Interaction Pulse for incoming pokes
+    val incomingPoke = interactions.firstOrNull { it.senderId != userProfile?.userId }
+    if (incomingPoke != null) {
+        IncomingInteractionPulse(incomingPoke)
+    }
+
+    // Lovely floating decor
+    FloatingDecor()
 }
 }
 
@@ -338,6 +376,79 @@ fun RepeatingHearts() {
         
         Box(modifier = Modifier.offset(x = (index * 40).dp, y = yOffset.dp)) {
             Text("❤️", fontSize = 24.sp)
+        }
+    }
+}
+@Composable
+fun IncomingInteractionPulse(interaction: Interaction) {
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scale"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Card(
+            modifier = Modifier
+                .graphicsLayer(scaleX = scale, scaleY = scale)
+                .clip(RoundedCornerShape(50))
+                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f))
+                .padding(horizontal = 24.dp, vertical = 12.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(if (interaction.type == "poke") "👉" else "❤️", fontSize = 24.sp)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "You've been ${interaction.type}d!",
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun FloatingDecor() {
+    val items = listOf("✨", "🌸", "☁️", "💖")
+    val count = 6
+    
+    Box(modifier = Modifier.fillMaxSize()) {
+        repeat(count) { i ->
+            val randomX = remember { Random.nextFloat() }
+            val randomY = remember { Random.nextFloat() }
+            val item = items[i % items.size]
+            
+            val infiniteTransition = rememberInfiniteTransition(label = "float")
+            val yOffset by infiniteTransition.animateFloat(
+                initialValue = 0f,
+                targetValue = 20f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(2000 + i * 500, easing = LinearOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "y"
+            )
+
+            Text(
+                text = item,
+                modifier = Modifier
+                    .offset(x = (randomX * 300).dp, y = (randomY * 600 + yOffset).dp)
+                    .alpha(0.3f),
+                fontSize = 16.sp
+            )
         }
     }
 }

@@ -31,11 +31,15 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
     private val _asks = MutableStateFlow<List<Ask>>(emptyList())
     val asks: StateFlow<List<Ask>> = _asks.asStateFlow()
 
+    private val _interactions = MutableStateFlow<List<Interaction>>(emptyList())
+    val interactions: StateFlow<List<Interaction>> = _interactions.asStateFlow()
+
     private var notesJob: Job? = null
     private var todosJob: Job? = null
     private var eventsJob: Job? = null
     private var moodsJob: Job? = null
     private var asksJob: Job? = null
+    private var interactionsJob: Job? = null
 
     // Load Data based on UserProfile
     fun startObserving(userProfile: UserProfile) {
@@ -74,6 +78,13 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
             repository.observeAsks(coupleId)
                 .catch { e -> GlobalErrorHandler.recordException(e) }
                 .collect { _asks.value = it }
+        }
+
+        interactionsJob?.cancel()
+        interactionsJob = viewModelScope.launch {
+            repository.observeInteractions(coupleId)
+                .catch { e -> GlobalErrorHandler.recordException(e) }
+                .collect { _interactions.value = it }
         }
     }
 
@@ -191,5 +202,17 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
         }
     }
 
-    // Removed local getCurrentIsoTime in favor of DateUtils
+    fun sendInteraction(coupleId: String, senderId: String, type: String) {
+        viewModelScope.launch {
+            GlobalErrorHandler.runWithCatch {
+                val interaction = Interaction(
+                    coupleId = coupleId,
+                    senderId = senderId,
+                    type = type,
+                    createdAt = DateUtils.getCurrentIsoTime()
+                )
+                repository.sendInteraction(interaction)
+            }
+        }
+    }
 }
