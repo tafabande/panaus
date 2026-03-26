@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ourspace.app.data.model.UserProfile
 import com.ourspace.app.data.util.DateUtils
+import com.ourspace.app.ui.components.EmptyState
 
 val REQUEST_TYPES = listOf(
     "Call me",
@@ -170,14 +171,12 @@ fun AsksScreen(
 
             if (asks.isEmpty() && !showForm) {
                 item {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(top = 40.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "No requests", tint = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.size(48.dp))
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("No requests currently.", color = MaterialTheme.colorScheme.outline, fontSize = 14.sp)
-                    }
+                    EmptyState(
+                        icon = Icons.AutoMirrored.Filled.Send,
+                        title = "No Requests Currently",
+                        description = "Start by asking your partner for something sweet or helpful.",
+                        modifier = Modifier.padding(top = 40.dp)
+                    )
                 }
             }
 

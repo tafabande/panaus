@@ -1,5 +1,6 @@
 package com.ourspace.app.ui.features
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
@@ -60,6 +61,12 @@ class FeaturesViewModel(
     private var interactionsJob: Job? = null
     private var memoriesJob: Job? = null
     private var partnerMoodJob: Job? = null
+    
+    // Throttling for interactions
+    private val lastInteractionTimes = mutableMapOf<String, Long>()
+    private val INTERACTION_COOLDOWN = 3000L // 3 seconds
+
+
 
     // Load Data based on UserProfile
     fun startObserving(userProfile: UserProfile) {
@@ -295,6 +302,16 @@ class FeaturesViewModel(
     }
 
     fun sendInteraction(coupleId: String, senderId: String, type: String) {
+        val currentTime = System.currentTimeMillis()
+        val lastTime = lastInteractionTimes[type] ?: 0L
+        
+        if (currentTime - lastTime < INTERACTION_COOLDOWN) {
+            Log.d("FeaturesViewModel", "Throttling interaction: $type")
+            return
+        }
+        
+        lastInteractionTimes[type] = currentTime
+        
         viewModelScope.launch {
             GlobalErrorHandler.runWithCatch {
                 val interaction = Interaction(

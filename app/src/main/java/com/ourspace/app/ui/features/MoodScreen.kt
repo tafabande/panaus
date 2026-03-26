@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ourspace.app.data.model.UserProfile
 import com.ourspace.app.data.util.DateUtils
+import com.ourspace.app.ui.components.EmptyState
+import androidx.compose.material.icons.automirrored.filled.Chat
 
 data class MoodOption(val value: Int, val emoji: String, val label: String)
 
@@ -163,13 +165,11 @@ fun MoodScreen(
 
             if (moods.isEmpty()) {
                 item {
-                    Text(
-                        text = "No moods logged yet.",
-                        modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
-                        color = Color(0xFF94A3B8),
-                        fontSize = 14.sp,
-                        fontStyle = FontStyle.Italic,
-                        textAlign = TextAlign.Center
+                    EmptyState(
+                        icon = Icons.AutoMirrored.Filled.Chat,
+                        title = "No Moods Logged Yet",
+                        description = "Start by logging how you feel today.",
+                        modifier = Modifier.padding(top = 20.dp)
                     )
                 }
             } else {

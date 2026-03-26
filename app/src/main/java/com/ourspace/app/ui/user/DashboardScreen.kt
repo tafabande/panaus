@@ -45,7 +45,8 @@ fun DashboardScreen(
     onLogout: () -> Unit,
     userViewModel: UserViewModel,
     featuresViewModel: FeaturesViewModel,
-    onNavigateToAnalytics: () -> Unit
+    onNavigateToAnalytics: () -> Unit,
+    profileTheme: Color = MaterialTheme.colorScheme.primary
 ) {
     val userProfile by userViewModel.userProfile.collectAsState()
     val partnerProfile by userViewModel.partnerProfile.collectAsState()
@@ -113,7 +114,7 @@ fun DashboardScreen(
                 Box(
                     modifier = Modifier
                         .size(48.dp)
-                        .border(2.dp, AuraColors.fromName(userProfile?.profileTheme), CircleShape)
+                        .border(2.dp, profileTheme, CircleShape)
                         .padding(2.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primaryContainer)

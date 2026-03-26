@@ -14,6 +14,7 @@ import com.ourspace.app.ui.user.ProfileScreen
 import com.ourspace.app.ui.features.*
 import com.ourspace.app.data.model.UserProfile
 import com.ourspace.app.ui.user.UserViewModel
+import com.ourspace.app.ui.theme.AuraColors
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -103,7 +104,8 @@ fun MainScreen(
                     },
                     userViewModel = userViewModel,
                     featuresViewModel = featuresViewModel,
-                    onNavigateToAnalytics = { navController.navigate("analytics") }
+                    onNavigateToAnalytics = { navController.navigate("analytics") },
+                    profileTheme = AuraColors.fromName(userProfile?.profileTheme)
                 )
             }
             composable(BottomNavItem.Notes.route) {

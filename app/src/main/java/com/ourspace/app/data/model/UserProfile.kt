@@ -1,5 +1,9 @@
 package com.ourspace.app.data.model
 
+import androidx.annotation.Keep
+import com.google.firebase.firestore.PropertyName
+
+@Keep
 data class UserProfile(
     val userId: String = "",
     val name: String = "",
@@ -7,8 +11,12 @@ data class UserProfile(
     val partnerId: String? = null,
     val coupleId: String? = null,
     val createdAt: String = "",
-    val isDiscoverable: Boolean = false,
-    val hasCompletedSetup: Boolean = false,
+    @get:PropertyName("isDiscoverable")
+    @set:PropertyName("isDiscoverable")
+    var isDiscoverable: Boolean = false,
+    @get:PropertyName("isSetupComplete")
+    @set:PropertyName("isSetupComplete")
+    var isSetupComplete: Boolean = false,
     val birthday: String? = null,
     val anniversary: String? = null,
     val foodPreferences: String? = null,
@@ -23,5 +31,7 @@ data class UserProfile(
     val nickname: String? = null,
     val statusText: String? = null,
     val avatarUrl: String? = null,
-    val themeColor: String? = null // Hex color for PFP ring
+    @get:PropertyName("profileTheme") @set:PropertyName("profileTheme")
+    var profileTheme: String? = null, // Theme color name (e.g., "Teal")
+    val themeColor: String? = null // Hex color override
 )

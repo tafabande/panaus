@@ -15,6 +15,15 @@ import androidx.compose.ui.unit.sp
 import com.ourspace.app.data.model.UserProfile
 import com.ourspace.app.ui.components.AuraDatePickerField
 import com.ourspace.app.ui.components.AuraTimePickerField
+import com.ourspace.app.ui.theme.AuraColors
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,6 +35,7 @@ fun ProfileSetupScreen(
     var gender by remember { mutableStateOf("Prefer not to say") }
     var nickname by remember { mutableStateOf("") }
     var statusText by remember { mutableStateOf("") }
+    var selectedTheme by remember { mutableStateOf("Teal") }
     
     val isSaving by userViewModel.isSavingProfile.collectAsState()
     val genders = listOf("Male", "Female", "Non-binary", "Prefer not to say")
@@ -78,7 +88,7 @@ fun ProfileSetupScreen(
                     readOnly = true,
                     label = { Text("Gender") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = genderExpanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth(),
+                    modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 )
                 ExposedDropdownMenu(
@@ -136,6 +146,42 @@ fun ProfileSetupScreen(
                 label = "Anniversary (Optional)"
             )
 
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            Text("CHOOSE YOUR AURA COLOR", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.outline, letterSpacing = 1.sp)
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(AuraColors.palette) { colorName ->
+                    val isSelected = selectedTheme == colorName
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(AuraColors.fromName(colorName))
+                            .border(
+                                width = if (isSelected) 3.dp else 0.dp,
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                shape = CircleShape
+                            )
+                            .clickable { selectedTheme = colorName },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (isSelected) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Selected",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(40.dp))
 
             Button(
@@ -147,7 +193,8 @@ fun ProfileSetupScreen(
                         "statusText" to statusText,
                         "birthday" to birthday,
                         "anniversary" to anniversary,
-                        "hasCompletedSetup" to true
+                        "profileTheme" to selectedTheme,
+                        "isSetupComplete" to true
                     )
                     userViewModel.updateExtendedProfile(updates)
                     onSetupComplete()

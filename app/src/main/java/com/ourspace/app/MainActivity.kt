@@ -59,6 +59,7 @@ import com.ourspace.app.data.repository.UserRepository
 import com.ourspace.app.data.repository.FeaturesRepository
 import com.ourspace.app.data.repository.AuthRepository
 import com.ourspace.app.ui.ViewModelFactory
+import com.ourspace.app.data.model.UserProfile
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
@@ -192,6 +193,7 @@ class MainActivity : ComponentActivity() {
                         } else if (userProfile?.coupleId == null && !hasSkippedPairing && userProfile != null) {
                             PairingScreen(
                                 onLogout = {
+                                    userViewModel.logout()
                                     navController.navigate("login") {
                                         popUpTo("main_flow") { inclusive = true }
                                     }

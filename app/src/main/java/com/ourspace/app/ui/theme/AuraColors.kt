@@ -8,8 +8,15 @@ object AuraColors {
      * Default to Gray if the color is unrecognized.
      */
     fun fromName(name: String?): Color {
-        return when (name?.lowercase()) {
+        return when (name?.trim()?.lowercase()) {
             "teal" -> Color(0xFF008080)
+            "red" -> Color(0xFFFF4842)
+            "blue" -> Color(0xFF1890FF)
+            "green" -> Color(0xFF54D62C)
+            "purple" -> Color(0xFF7635DC)
+            "yellow" -> Color(0xFFFFC107)
+            "pink" -> Color(0xFFFD36A4)
+            "black" -> Color(0xFF212B36)
             "rose" -> Color(0xFFE91E63)
             "lavender" -> Color(0xFF9575CD)
             "amber" -> Color(0xFFFFB300)
@@ -24,7 +31,7 @@ object AuraColors {
     }
 
     val palette = listOf(
-        "Teal", "Rose", "Lavender", "Amber", "Sky", 
-        "Emerald", "Coral", "Slate", "Gold", "Violet"
+        "Teal", "Red", "Blue", "Green", "Purple", "Yellow", "Pink", "Black",
+        "Rose", "Lavender", "Amber", "Sky", "Emerald", "Coral", "Slate", "Gold", "Violet"
     )
 }
