@@ -94,62 +94,67 @@ class FeaturesViewModel(
     // Load Data based on UserProfile
     fun startObserving(userProfile: UserProfile) {
         val coupleId = userProfile.coupleId ?: return
+        Log.d("FeaturesViewModel", "Starting observation for couple: $coupleId")
 
         notesJob?.cancel()
         notesJob = viewModelScope.launch {
             repository.observeNotes(coupleId)
-                .catch { e -> GlobalErrorHandler.recordException(e) }
+                .catch { e -> Log.e("FeaturesViewModel", "Notes error", e); GlobalErrorHandler.recordException(e) }
                 .collect { _notes.value = it }
         }
 
         todosJob?.cancel()
         todosJob = viewModelScope.launch {
             repository.observeTodos(coupleId)
-                .catch { e -> GlobalErrorHandler.recordException(e) }
+                .catch { e -> Log.e("FeaturesViewModel", "Todos error", e); GlobalErrorHandler.recordException(e) }
                 .collect { _todos.value = it }
         }
 
         eventsJob?.cancel()
         eventsJob = viewModelScope.launch {
             repository.observeEvents(coupleId)
-                .catch { e -> GlobalErrorHandler.recordException(e) }
+                .catch { e -> Log.e("FeaturesViewModel", "Events error", e); GlobalErrorHandler.recordException(e) }
                 .collect { _events.value = it }
         }
 
         moodsJob?.cancel()
         moodsJob = viewModelScope.launch {
             repository.observeMoods(coupleId)
-                .catch { e -> GlobalErrorHandler.recordException(e) }
+                .catch { e -> Log.e("FeaturesViewModel", "Moods error", e); GlobalErrorHandler.recordException(e) }
                 .collect { _moods.value = it }
         }
 
         asksJob?.cancel()
         asksJob = viewModelScope.launch {
             repository.observeAsks(coupleId)
-                .catch { e -> GlobalErrorHandler.recordException(e) }
+                .catch { e -> Log.e("FeaturesViewModel", "Asks error", e); GlobalErrorHandler.recordException(e) }
                 .collect { _asks.value = it }
         }
 
         interactionsJob?.cancel()
         interactionsJob = viewModelScope.launch {
             repository.observeInteractions(coupleId)
-                .catch { e -> GlobalErrorHandler.recordException(e) }
-                .collect { _interactions.value = it }
+                .catch { e -> Log.e("FeaturesViewModel", "Interactions error", e); GlobalErrorHandler.recordException(e) }
+                .collect { 
+                    Log.d("FeaturesViewModel", "Received ${it.size} interactions")
+                    _interactions.value = it 
+                }
         }
 
         memoriesJob?.cancel()
         memoriesJob = viewModelScope.launch {
             repository.observeMemories(coupleId)
-                .catch { e -> GlobalErrorHandler.recordException(e) }
+                .catch { e -> Log.e("FeaturesViewModel", "Memories error", e); GlobalErrorHandler.recordException(e) }
                 .collect { _memories.value = it }
         }
 
         viewModelScope.launch {
             repository.getRelationshipEvents(coupleId)
-                .catch { e -> GlobalErrorHandler.recordException(e) }
+                .catch { e -> Log.e("FeaturesViewModel", "RelationshipEvents error", e); GlobalErrorHandler.recordException(e) }
                 .collect { _relationshipEvents.value = it }
         }
     }
+
 
     fun uploadMemory(coupleId: String, userId: String, localUri: android.net.Uri, caption: String = "") {
         val tempId = java.util.UUID.randomUUID().toString()
@@ -371,6 +376,23 @@ class FeaturesViewModel(
             }
         }
     }
+
+    fun searchSongs(query: String) {
+        if (query.isBlank()) {
+            _songSuggestions.value = emptyList()
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val results = musicRepository.searchSongs(query)
+                _songSuggestions.value = results
+            } catch (e: Exception) {
+                Log.e("FeaturesViewModel", "Song search failed", e)
+                _songSuggestions.value = emptyList()
+            }
+        }
+    }
+
 }
 
 sealed class TimelineItem {

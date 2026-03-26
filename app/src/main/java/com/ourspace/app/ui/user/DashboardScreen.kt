@@ -178,17 +178,27 @@ fun DashboardScreen(
                     Spacer(modifier = Modifier.weight(1f))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        TextButton(
-                            onClick = {
-                                userProfile?.let { u ->
-                                    featuresViewModel.sendInteraction(u.coupleId ?: "", u.userId, "poke")
-                                }
-                            },
-                        ) {
-                            Text("Poke 👉", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
+                        val interactionTypes = listOf(
+                            Triple("poke", "Poke 👉", AuraColors.CreamyPink),
+                            Triple("hug", "Hug 🤗", AuraColors.SoftRose),
+                            Triple("kiss", "Kiss 💋", AuraColors.DeepMauve)
+                        )
+                        
+                        interactionTypes.forEach { (type, label, color) ->
+                            TextButton(
+                                onClick = {
+                                    userProfile?.let { u ->
+                                        featuresViewModel.sendInteraction(u.coupleId ?: "", u.userId, type)
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Text(label, fontSize = 10.sp, color = MaterialTheme.colorScheme.primary)
+                            }
                         }
                     }
                 }

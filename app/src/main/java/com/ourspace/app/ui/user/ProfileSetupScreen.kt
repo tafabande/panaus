@@ -18,17 +18,23 @@ import com.ourspace.app.ui.components.AuraTimePickerField
 import com.ourspace.app.ui.theme.AuraColors
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import com.ourspace.app.data.api.SongResult
+
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileSetupScreen(
     userViewModel: UserViewModel,
+    featuresViewModel: com.ourspace.app.ui.features.FeaturesViewModel,
     onSetupComplete: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
@@ -36,6 +42,16 @@ fun ProfileSetupScreen(
     var nickname by remember { mutableStateOf("") }
     var statusText by remember { mutableStateOf("") }
     var selectedTheme by remember { mutableStateOf("Teal") }
+    
+    // New fields
+    var favoriteSong by remember { mutableStateOf("") }
+    var songSearchQuery by remember { mutableStateOf("") }
+    val songSuggestions by featuresViewModel.songSuggestions.collectAsState()
+    var showSongSuggestions by remember { mutableStateOf(false) }
+
+    var firstDateLocation by remember { mutableStateOf("") }
+    var firstKissDate by remember { mutableStateOf("") }
+    var howWeMet by remember { mutableStateOf("") }
     
     val isSaving by userViewModel.isSavingProfile.collectAsState()
     val genders = listOf("Male", "Female", "Non-binary", "Prefer not to say")
@@ -46,10 +62,13 @@ fun ProfileSetupScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .padding(24.dp),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.TopCenter
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 40.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -146,6 +165,81 @@ fun ProfileSetupScreen(
                 label = "Anniversary (Optional)"
             )
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // --- Song Search ---
+            Column(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = if (favoriteSong.isNotEmpty()) favoriteSong else songSearchQuery,
+                    onValueChange = { 
+                        songSearchQuery = it
+                        favoriteSong = "" // Reset selection if typing
+                        featuresViewModel.searchSongs(it)
+                        showSongSuggestions = it.isNotEmpty()
+                    },
+                    label = { Text("Our Favorite Song (Autocomplete)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    trailingIcon = {
+                        if (favoriteSong.isNotEmpty()) {
+                             Icon(Icons.Default.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                )
+                
+                if (showSongSuggestions && songSuggestions.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        LazyColumn {
+                            items(songSuggestions) { song ->
+                                ListItem(
+                                    headlineContent = { Text(song.trackName) },
+                                    supportingContent = { Text(song.artistName) },
+                                    modifier = Modifier.clickable {
+                                        favoriteSong = "${song.trackName} - ${song.artistName}"
+                                        songSearchQuery = favoriteSong
+                                        showSongSuggestions = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = firstDateLocation,
+                onValueChange = { firstDateLocation = it },
+                label = { Text("Where was your first date?") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            AuraDatePickerField(
+                value = firstKissDate,
+                onValueChange = { firstKissDate = it },
+                label = "When was your first kiss?"
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = howWeMet,
+                onValueChange = { howWeMet = it },
+                label = { Text("How did you meet? (Optional)") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 3,
+                maxLines = 5,
+                shape = RoundedCornerShape(12.dp)
+            )
+
             Spacer(modifier = Modifier.height(24.dp))
             
             Text("CHOOSE YOUR AURA COLOR", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.outline, letterSpacing = 1.sp)
@@ -193,6 +287,10 @@ fun ProfileSetupScreen(
                         "statusText" to statusText,
                         "birthday" to birthday,
                         "anniversary" to anniversary,
+                        "favoriteSongs" to favoriteSong,
+                        "firstDateLocation" to firstDateLocation,
+                        "firstKissDate" to firstKissDate,
+                        "howWeMet" to howWeMet,
                         "profileTheme" to selectedTheme,
                         "isSetupComplete" to true
                     )

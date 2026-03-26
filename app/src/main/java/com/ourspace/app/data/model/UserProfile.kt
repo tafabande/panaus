@@ -33,7 +33,11 @@ data class UserProfile(
     val nickname: String? = null,
     val statusText: String? = null,
     val avatarUrl: String? = null,
+    val firstDateLocation: String? = null,
+    val firstKissDate: String? = null,
+    val howWeMet: String? = null,
     @get:PropertyName("profileTheme") @set:PropertyName("profileTheme")
     var profileTheme: String? = null, // Theme color name (e.g., "Teal")
     val themeColor: String? = null // Hex color override
+
 )

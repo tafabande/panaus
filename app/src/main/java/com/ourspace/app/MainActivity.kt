@@ -186,6 +186,7 @@ class MainActivity : ComponentActivity() {
                         if (userProfile != null && !(userProfile?.isSetupComplete ?: false)) {
                             com.ourspace.app.ui.user.ProfileSetupScreen(
                                 userViewModel = userViewModel,
+                                featuresViewModel = featuresViewModel,
                                 onSetupComplete = {
                                     // Local state update via VM should trigger recomposition
                                 }
