@@ -23,6 +23,10 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.ourspace.app.ui.auth.LoginScreen
 import com.ourspace.app.ui.auth.RegisterScreen
 import com.ourspace.app.ui.features.CalendarScreen
@@ -53,12 +57,17 @@ class MainActivity : ComponentActivity() {
         setContent {
             val userViewModel: UserViewModel = viewModel()
             
+            var isFirebaseReady by remember { mutableStateOf(false) }
+            
             // Move heavy initialization to background thread
             LaunchedEffect(Unit) {
-                FirebaseApp.initializeApp(this@MainActivity)
-                FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
-                    PlayIntegrityAppCheckProviderFactory.getInstance()
-                )
+                withContext(Dispatchers.IO) {
+                    FirebaseApp.initializeApp(this@MainActivity)
+                    FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
+                        PlayIntegrityAppCheckProviderFactory.getInstance()
+                    )
+                }
+                isFirebaseReady = true
             }
             val userProfile by userViewModel.userProfile.collectAsState()
             val hasSkippedPairing by userViewModel.hasSkippedPairing.collectAsState()
@@ -72,7 +81,15 @@ class MainActivity : ComponentActivity() {
             }
 
             val navController = rememberNavController()
-            val startDest = if (FirebaseAuth.getInstance().currentUser != null) "main_flow" else "login"
+            
+            // Calculate start destination only after Firebase is ready
+            val startDest = remember(isFirebaseReady) {
+                if (isFirebaseReady) {
+                    if (FirebaseAuth.getInstance().currentUser != null) "main_flow" else "login"
+                } else {
+                    "loading"
+                }
+            }
             
             val snackbarHostState = remember { SnackbarHostState() }
 
@@ -92,6 +109,11 @@ class MainActivity : ComponentActivity() {
                     startDestination = startDest,
                     modifier = Modifier.padding(innerPadding)
                 ) {
+                    composable("loading") {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("Initializing App...")
+                        }
+                    }
                     composable("login") {
                         LoginScreen(
                             onNavigateToRegister = { navController.navigate("register") },
