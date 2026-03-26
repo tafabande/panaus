@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.ourspace.app.data.model.UserProfile
 import com.ourspace.app.data.repository.UserRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,20 +31,28 @@ class UserViewModel(private val repository: UserRepository = UserRepository()) :
     private val _hasSkippedPairing = MutableStateFlow(false)
     val hasSkippedPairing: StateFlow<Boolean> = _hasSkippedPairing.asStateFlow()
 
+    private var observerJob: Job? = null
+
     init {
-        observeUser()
+        FirebaseAuth.getInstance().addAuthStateListener { auth ->
+            val user = auth.currentUser
+            if (user != null) {
+                observeUser(user.uid)
+            } else {
+                observerJob?.cancel()
+                _userProfile.value = null
+            }
+        }
     }
 
-    private fun observeUser() {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser != null) {
-            viewModelScope.launch {
-                repository.observeUser(currentUser.uid)
-                    .catch { e -> GlobalErrorHandler.recordException(e) }
-                    .collectLatest { profile ->
-                        _userProfile.value = profile
-                    }
-            }
+    private fun observeUser(uid: String) {
+        observerJob?.cancel()
+        observerJob = viewModelScope.launch {
+            repository.observeUser(uid)
+                .catch { e -> GlobalErrorHandler.recordException(e) }
+                .collectLatest { profile ->
+                    _userProfile.value = profile
+                }
         }
     }
 

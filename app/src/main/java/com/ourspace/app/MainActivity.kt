@@ -51,18 +51,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         freezeDetector.start()
         enableEdgeToEdge()
+        FirebaseApp.initializeApp(this)
+
         setContent {
             val userViewModel: UserViewModel = viewModel()
             
-            var isFirebaseReady by remember { mutableStateOf(false) }
-            
-            // Move heavy initialization to background thread
-            LaunchedEffect(Unit) {
-                withContext(Dispatchers.IO) {
-                    FirebaseApp.initializeApp(this@MainActivity)
-                }
-                isFirebaseReady = true
-            }
+            var isFirebaseReady by remember { mutableStateOf(true) }
             val userProfile by userViewModel.userProfile.collectAsState()
             val hasSkippedPairing by userViewModel.hasSkippedPairing.collectAsState()
             
