@@ -1,6 +1,7 @@
 package com.ourspace.app.ui.features
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -31,13 +33,33 @@ fun CalendarScreen(
     viewModel: FeaturesViewModel,
     onBack: () -> Unit
 ) {
+    // onBack is used to navigate away from the screen
     val events by viewModel.events.collectAsState()
     var showForm by remember { mutableStateOf(false) }
     
     var title by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("") }
-    var time by remember { mutableStateOf("") }
+    var selectedDate by remember { mutableStateOf(DateUtils.getCurrentDate()) }
+    var selectedTime by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("Date Night") }
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val calendar = java.util.Calendar.getInstance()
+
+    val datePickerDialog = android.app.DatePickerDialog(
+        context,
+        { _, y, m, d -> selectedDate = DateUtils.formatToIsoDate(y, m, d) },
+        calendar.get(java.util.Calendar.YEAR),
+        calendar.get(java.util.Calendar.MONTH),
+        calendar.get(java.util.Calendar.DAY_OF_MONTH)
+    )
+
+    val timePickerDialog = android.app.TimePickerDialog(
+        context,
+        { _, h, m -> selectedTime = DateUtils.formatToDisplayTime(h, m) },
+        calendar.get(java.util.Calendar.HOUR_OF_DAY),
+        calendar.get(java.util.Calendar.MINUTE),
+        false
+    )
 
     Scaffold(
         containerColor = surfaceColor,
@@ -65,7 +87,13 @@ fun CalendarScreen(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { Spacer(modifier = Modifier.height(8.dp)) }
+            item { 
+                HorizontalCalendarOverview(
+                    events = events,
+                    selectedDate = selectedDate,
+                    onDateSelect = { selectedDate = it }
+                )
+            }
 
             if (showForm) {
                 item {
@@ -86,31 +114,35 @@ fun CalendarScreen(
                                 shape = RoundedCornerShape(12.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = primaryColor,
-                                    unfocusedBorderColor = Color.LightGray
+                                    unfocusedBorderColor = Color.DarkGray
                                 )
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 OutlinedTextField(
-                                    value = date,
-                                    onValueChange = { date = it },
-                                    label = { Text("Date (YYYY-MM-DD)") },
-                                    modifier = Modifier.weight(1f),
+                                    value = selectedDate,
+                                    onValueChange = { },
+                                    label = { Text("Date") },
+                                    modifier = Modifier.weight(1f).clickable { datePickerDialog.show() },
+                                    enabled = false,
                                     shape = RoundedCornerShape(12.dp),
                                     colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = primaryColor,
-                                        unfocusedBorderColor = Color.LightGray
+                                        disabledTextColor = onSurfaceColor,
+                                        disabledBorderColor = Color.LightGray,
+                                        disabledLabelColor = Color.Gray
                                     )
                                 )
                                 OutlinedTextField(
-                                    value = time,
-                                    onValueChange = { time = it },
+                                    value = selectedTime,
+                                    onValueChange = { },
                                     label = { Text("Time") },
-                                    modifier = Modifier.weight(1f),
+                                    modifier = Modifier.weight(1f).clickable { timePickerDialog.show() },
+                                    enabled = false,
                                     shape = RoundedCornerShape(12.dp),
                                     colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = primaryColor,
-                                        unfocusedBorderColor = Color.LightGray
+                                        disabledTextColor = onSurfaceColor,
+                                        disabledBorderColor = Color.LightGray,
+                                        disabledLabelColor = Color.Gray
                                     )
                                 )
                             }
@@ -118,7 +150,7 @@ fun CalendarScreen(
                             OutlinedTextField(
                                 value = category,
                                 onValueChange = { category = it },
-                                label = { Text("Category (e.g Date Night)") },
+                                label = { Text("Category") },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
@@ -138,22 +170,19 @@ fun CalendarScreen(
                                 }
                                 Button(
                                     onClick = {
-                                        if (title.isNotBlank() && date.isNotBlank()) {
+                                        if (title.isNotBlank() && selectedDate.isNotBlank()) {
                                             userProfile?.let { profile ->
                                                 viewModel.addEvent(
                                                     coupleId = profile.coupleId ?: "",
                                                     creatorId = profile.userId,
                                                     title = title,
-                                                    date = date,
-                                                    time = time,
+                                                    date = selectedDate,
+                                                    time = selectedTime,
                                                     category = category
                                                 )
                                                 title = ""
-                                                date = ""
-                                                time = ""
+                                                selectedTime = ""
                                                 showForm = false
-                                            } ?: run {
-                                                com.ourspace.app.util.GlobalErrorHandler.showMessage("Cannot save event while offline/loading")
                                             }
                                         }
                                     },
@@ -168,20 +197,7 @@ fun CalendarScreen(
                 }
             }
 
-            if (events.isEmpty() && !showForm) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 40.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Your calendar is completely empty.", color = Color.Gray, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
-                    }
-                }
-            }
-
-            items(events, key = { it.id }) { event ->
+            items(events.filter { it.date == selectedDate }, key = { it.id }) { event ->
                 val (monthStr, dayStr) = DateUtils.formatMonthDay(event.date)
 
                 Card(
@@ -219,6 +235,51 @@ fun CalendarScreen(
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun HorizontalCalendarOverview(
+    events: List<com.ourspace.app.data.model.CalendarEvent>,
+    selectedDate: String,
+    onDateSelect: (String) -> Unit
+) {
+    val days = (0..14).map { offset ->
+        val c = java.util.Calendar.getInstance()
+        c.add(java.util.Calendar.DAY_OF_YEAR, offset)
+        c.time
+    }
+
+    androidx.compose.foundation.lazy.LazyRow(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(days) { date ->
+            val isoDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(date)
+            val dayOfMonth = java.text.SimpleDateFormat("d", java.util.Locale.US).format(date)
+            val dayOfWeek = java.text.SimpleDateFormat("EEE", java.util.Locale.US).format(date)
+            val isSelected = isoDate == selectedDate
+            val hasEvents = events.any { it.date == isoDate }
+
+            Column(
+                modifier = Modifier
+                    .width(55.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(if (isSelected) primaryColor else Color.White)
+                    .clickable { onDateSelect(isoDate) }
+                    .padding(vertical = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(dayOfWeek, fontSize = 10.sp, color = if (isSelected) Color.White else Color.Gray)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(dayOfMonth, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = if (isSelected) Color.White else onSurfaceColor)
+                
+                if (hasEvents) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Box(modifier = Modifier.size(4.dp).background(if (isSelected) Color.White else primaryColor, androidx.compose.foundation.shape.CircleShape))
                 }
             }
         }

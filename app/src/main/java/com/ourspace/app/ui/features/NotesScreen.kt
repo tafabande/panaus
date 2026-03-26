@@ -1,23 +1,31 @@
 package com.ourspace.app.ui.features
 
+import java.text.SimpleDateFormat
+
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ourspace.app.data.model.Note
 import com.ourspace.app.data.model.UserProfile
 import com.ourspace.app.data.util.DateUtils
 
@@ -33,20 +41,14 @@ fun NotesScreen(
     onBack: () -> Unit
 ) {
     val notes by viewModel.notes.collectAsState()
-    var newMessage by remember { mutableStateOf("") }
-    val listState = rememberLazyListState()
-
-    LaunchedEffect(notes.size) {
-        if (notes.isNotEmpty()) {
-            listState.animateScrollToItem(notes.size - 1)
-        }
-    }
+    val partnerMood by viewModel.partnerMood.collectAsState()
+    var showNoteDialog by remember { mutableStateOf<Note?>(null) }
 
     Scaffold(
         containerColor = surfaceColor,
         topBar = {
             TopAppBar(
-                title = { Text("Pocket Notes", fontSize = 24.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif, color = primaryColor) },
+                title = { Text("Shared Space", fontSize = 24.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif, color = primaryColor) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = onSurfaceColor)
@@ -55,116 +57,223 @@ fun NotesScreen(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = surfaceColor)
             )
         },
-        bottomBar = {
-            Surface(
-                color = surfaceColor,
-                shadowElevation = 8.dp,
-                modifier = Modifier.fillMaxWidth()
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { showNoteDialog = Note(coupleId = userProfile?.coupleId ?: "", senderId = userProfile?.userId ?: "") },
+                containerColor = primaryColor,
+                contentColor = Color.White,
+                shape = CircleShape
             ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    OutlinedTextField(
-                        value = newMessage,
-                        onValueChange = { newMessage = it },
-                        modifier = Modifier.weight(1f),
-                        placeholder = { Text("Write a note...") },
-                        shape = RoundedCornerShape(24.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = primaryColor,
-                            unfocusedBorderColor = Color.LightGray,
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White
-                        )
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    IconButton(
-                        onClick = {
-                            if (newMessage.isNotBlank()) {
-                                userProfile?.let { profile ->
-                                    viewModel.sendNote(
-                                        coupleId = profile.coupleId ?: "",
-                                        senderId = profile.userId,
-                                        receiverId = profile.partnerId,
-                                        content = newMessage
-                                    )
-                                    newMessage = ""
-                                } ?: run {
-                                    com.ourspace.app.util.GlobalErrorHandler.showMessage("Cannot send note while offline/loading")
-                                }
-                            }
-                        },
-                        modifier = Modifier
-                            .background(primaryColor, RoundedCornerShape(24.dp))
-                            .padding(4.dp)
-                    ) {
-                        Icon(Icons.Filled.Send, contentDescription = "Send", tint = Color.White)
-                    }
-                }
+                Icon(Icons.Default.Add, contentDescription = "Add Note")
             }
         }
     ) { innerPadding ->
-        LazyColumn(
-            state = listState,
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { Spacer(modifier = Modifier.height(16.dp)) }
-            
-            if (notes.isEmpty()) {
-                item {
-                    Text(
-                        text = "No notes yet. Leave a little message!",
-                        modifier = Modifier.fillMaxWidth().padding(top = 40.dp),
-                        color = Color.Gray,
-                        fontSize = 14.sp,
-                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
-                }
-            } else {
-                items(notes, key = { it.id }) { note ->
-                    val isMe = note.senderId == userProfile?.userId
+            // Partner Mood Banner
+            if (partnerMood != null) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (isMe) primaryColor else Color.White
-                            ),
-                            shape = RoundedCornerShape(
-                                topStart = 16.dp,
-                                topEnd = 16.dp,
-                                bottomStart = if (isMe) 16.dp else 0.dp,
-                                bottomEnd = if (isMe) 0.dp else 16.dp
-                            ),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                            modifier = Modifier.widthIn(max = 280.dp)
+                        Surface(
+                            shape = CircleShape,
+                            color = primaryColor.copy(alpha = 0.1f),
+                            modifier = Modifier.size(48.dp)
                         ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    text = note.content,
-                                    color = if (isMe) Color.White else onSurfaceColor,
-                                    fontSize = 15.sp,
-                                    lineHeight = 22.sp
-                                )
-                                Text(
-                                    text = DateUtils.formatTime(note.createdAt),
-                                    color = if (isMe) Color(0xFFffccd5) else Color.Gray,
-                                    fontSize = 11.sp,
-                                    modifier = Modifier.align(Alignment.End).padding(top = 8.dp)
-                                )
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(partnerMood?.emoji ?: "😊", fontSize = 24.sp)
                             }
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                text = "Your partner is feeling ${partnerMood?.note?.ifBlank { "good" } ?: "good"}",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = onSurfaceColor
+                            )
+                            Text(
+                                text = "Updated ${DateUtils.formatRelativeTime(partnerMood?.timestamp ?: 0L)}",
+                                fontSize = 11.sp,
+                                color = Color.Gray
+                            )
                         }
                     }
                 }
             }
-            item { Spacer(modifier = Modifier.height(16.dp)) }
+
+            // Notes Grid
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                contentPadding = PaddingValues(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                items(notes, key = { it.id }) { note ->
+                    NoteCard(
+                        note = note,
+                        onClick = { showNoteDialog = note },
+                        onDelete = { viewModel.deleteNote(userProfile?.coupleId ?: "", note.id) }
+                    )
+                }
+            }
+        }
+    }
+
+    if (showNoteDialog != null) {
+        NoteEditDialog(
+            note = showNoteDialog!!,
+            onDismiss = { showNoteDialog = null },
+            onSave = { updatedNote ->
+                userProfile?.coupleId?.let { viewModel.saveNote(it, updatedNote) }
+                showNoteDialog = null
+            }
+        )
+    }
+}
+
+@Composable
+fun NoteCard(
+    note: Note,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(android.graphics.Color.parseColor(note.color)).copy(alpha = 0.9f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = note.title.ifBlank { "Untitled" },
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = onSurfaceColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Gray.copy(alpha = 0.5f), modifier = Modifier.size(16.dp))
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = note.content,
+                fontSize = 13.sp,
+                color = onSurfaceColor.copy(alpha = 0.8f),
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = SimpleDateFormat("MMM d", java.util.Locale.getDefault()).format(java.util.Date(note.timestamp)),
+                fontSize = 10.sp,
+                color = Color.Gray,
+                modifier = Modifier.align(Alignment.End)
+            )
         }
     }
 }
+
+@Composable
+fun NoteEditDialog(
+    note: Note,
+    onDismiss: () -> Unit,
+    onSave: (Note) -> Unit
+) {
+    var title by remember { mutableStateOf(note.title) }
+    var content by remember { mutableStateOf(note.content) }
+    var selectedColor by remember { mutableStateOf(note.color) }
+
+    val colors = listOf("#FFFFFF", "#F8BBD0", "#E1BEE7", "#C5CAE9", "#B3E5FC", "#C8E6C9", "#FFF9C4", "#FFE0B2")
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (note.id.isEmpty()) "New Note" else "Edit Note") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Title") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = content,
+                    onValueChange = { content = it },
+                    label = { Text("Content") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Pick a color", fontSize = 12.sp, color = Color.Gray)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    colors.forEach { colorStr ->
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(Color(android.graphics.Color.parseColor(colorStr)))
+                                .clickable { selectedColor = colorStr }
+                                .let { 
+                                    if (selectedColor == colorStr) {
+                                        it.background(Color.Black.copy(alpha = 0.1f), CircleShape)
+                                    } else it
+                                }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                onSave(note.copy(title = title, content = content, color = selectedColor, timestamp = System.currentTimeMillis()))
+            }) {
+                Text("Save", color = primaryColor)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = Color.Gray)
+            }
+        }
+    )
+}
+
+

@@ -99,6 +99,59 @@ fun PairingScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
+                if (pairingState is PairingState.Error) {
+                    Text(
+                        text = (pairingState as PairingState.Error).message,
+                        color = Color(0xFFE11D48),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFFFF1F2), RoundedCornerShape(12.dp))
+                            .padding(12.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                // --- NEW: Request Handling UI ---
+                when (val state = pairingState) {
+                    is PairingState.ReceivingRequest -> {
+                        Card(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF0FDF4)), // green-50
+                            shape = RoundedCornerShape(16.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBBF7D0))
+                        ) {
+                            Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("New Connection Request!", fontWeight = FontWeight.Bold, color = Color(0xFF166534))
+                                Text("Someone wants to pair with you.", fontSize = 12.sp, color = Color(0xFF166534))
+                                Spacer(Modifier.height(12.dp))
+                                Button(
+                                    onClick = { viewModel.acceptRequest(state.fromId) },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E)),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Accept & Connect")
+                                }
+                            }
+                        }
+                    }
+                    is PairingState.RequestSent -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFFFEF9C3), RoundedCornerShape(16.dp)) // yellow-100
+                                .padding(16.dp)
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("Waiting for partner...", fontWeight = FontWeight.Bold, color = Color(0xFF854D0E))
+                                Text("Request sent to code: ${state.toCode}", fontSize = 12.sp, color = Color(0xFF854D0E))
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                    else -> {}
+                }
+                // --------------------------------
+
                 // Invite Code Box
                 Column(
                     modifier = Modifier
@@ -124,9 +177,10 @@ fun PairingScreen(
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
-                                text = userProfile?.userId ?: "Loading...",
+                                text = userProfile?.partnerCode ?: "No Code",
                                 color = Color(0xFFE11D48),
-                                fontSize = 14.sp,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(12.dp),
                                 maxLines = 1,
                             )
@@ -135,7 +189,7 @@ fun PairingScreen(
                         Button(
                             onClick = {
                                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                val clip = ClipData.newPlainText("Invite Code", userProfile?.userId ?: "")
+                                val clip = ClipData.newPlainText("Invite Code", userProfile?.partnerCode ?: "")
                                 clipboard.setPrimaryClip(clip)
                                 copied = true
                             },
@@ -198,8 +252,10 @@ fun PairingScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color(0xFF1E293B),
+                        unfocusedTextColor = Color(0xFF1E293B),
                         focusedBorderColor = Color(0xFFF43F5E),
-                        unfocusedBorderColor = Color(0xFFFFE4E6)
+                        unfocusedBorderColor = Color.DarkGray
                     )
                 )
 

@@ -70,6 +70,7 @@ class MainActivity : ComponentActivity() {
             
             var isFirebaseReady by remember { mutableStateOf(true) }
             val userProfile by userViewModel.userProfile.collectAsState()
+            val themePreference by userViewModel.themePreference.collectAsState()
             val hasSkippedPairing by userViewModel.hasSkippedPairing.collectAsState()
             
             val featuresViewModel: FeaturesViewModel = viewModel()
@@ -99,7 +100,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            OurSpaceTheme(themePreference = userProfile?.themePreference ?: "SYSTEM") {
+            OurSpaceTheme(themePreference = themePreference) {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     containerColor = Color.Transparent, // Let the screens handle background
@@ -141,7 +142,7 @@ class MainActivity : ComponentActivity() {
 
                         LaunchedEffect(userProfile, hasShownOfflineMessage) {
                             if (userProfile == null && !hasShownOfflineMessage) {
-                                delay(15000) // 15-second failure handler (reduced from 60s)
+                                delay(180000) // 180-second failure handler (per new requirements)
                                 if (userProfile == null) {
                                     val result = snackbarHostState.showSnackbar(
                                         message = "Data load is taking longer than expected. Using offline mode.",

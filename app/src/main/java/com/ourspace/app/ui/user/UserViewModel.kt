@@ -1,5 +1,8 @@
 package com.ourspace.app.ui.user
 
+import android.app.Application
+import android.content.Context
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
@@ -18,10 +21,17 @@ sealed class PairingState {
     object Idle : PairingState()
     object Loading : PairingState()
     object Success : PairingState()
+    data class RequestSent(val toCode: String) : PairingState()
+    data class ReceivingRequest(val fromId: String, val fromName: String) : PairingState()
     data class Error(val message: String) : PairingState()
 }
 
-class UserViewModel(private val repository: UserRepository = UserRepository()) : ViewModel() {
+class UserViewModel(application: Application, private val repository: UserRepository = UserRepository()) : AndroidViewModel(application) {
+    private val prefs = application.getSharedPreferences("aura_amour_prefs", Context.MODE_PRIVATE)
+
+    private val _themePreference = MutableStateFlow(prefs.getString("theme_pref", "SYSTEM") ?: "SYSTEM")
+    val themePreference: StateFlow<String> = _themePreference.asStateFlow()
+
     private val _userProfile = MutableStateFlow<UserProfile?>(null)
     val userProfile: StateFlow<UserProfile?> = _userProfile.asStateFlow()
 
@@ -36,14 +46,17 @@ class UserViewModel(private val repository: UserRepository = UserRepository()) :
 
     private var observerJob: Job? = null
     private var partnerObserverJob: Job? = null
+    private var requestObserverJob: Job? = null
 
     init {
         FirebaseAuth.getInstance().addAuthStateListener { auth ->
             val user = auth.currentUser
             if (user != null) {
                 observeUser(user.uid)
+                observeRequests(user.uid)
             } else {
                 observerJob?.cancel()
+                requestObserverJob?.cancel()
                 _userProfile.value = null
             }
         }
@@ -61,6 +74,20 @@ class UserViewModel(private val repository: UserRepository = UserRepository()) :
                     } else {
                         partnerObserverJob?.cancel()
                         _partnerProfile.value = null
+                    }
+                }
+        }
+    }
+
+    private fun observeRequests(uid: String) {
+        requestObserverJob?.cancel()
+        requestObserverJob = viewModelScope.launch {
+            repository.observePairingRequest(uid)
+                .collectLatest { request ->
+                    if (request != null && _pairingState.value !is PairingState.Loading) {
+                        val fromId = request["fromId"] as? String ?: return@collectLatest
+                        // In a real app, you might fetch the seeker's name here
+                        _pairingState.value = PairingState.ReceivingRequest(fromId, "Someone")
                     }
                 }
         }
@@ -84,10 +111,22 @@ class UserViewModel(private val repository: UserRepository = UserRepository()) :
         
         _pairingState.value = PairingState.Loading
         viewModelScope.launch {
-            val result = repository.pairWithPartner(currentUserId, partnerCode)
+            val result = repository.sendPairingRequest(currentUserId, partnerCode)
+            result.fold(
+                onSuccess = { _pairingState.value = PairingState.RequestSent(partnerCode) },
+                onFailure = { _pairingState.value = PairingState.Error(it.message ?: "Request failed") }
+            )
+        }
+    }
+
+    fun acceptRequest(fromId: String) {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        _pairingState.value = PairingState.Loading
+        viewModelScope.launch {
+            val result = repository.acceptPairingRequest(fromId, currentUserId)
             result.fold(
                 onSuccess = { _pairingState.value = PairingState.Success },
-                onFailure = { _pairingState.value = PairingState.Error(it.message ?: "Unknown pairing error") }
+                onFailure = { _pairingState.value = PairingState.Error(it.message ?: "Acceptance failed") }
             )
         }
     }
@@ -133,7 +172,8 @@ class UserViewModel(private val repository: UserRepository = UserRepository()) :
     }
 
     fun setTheme(theme: String) {
-        updateExtendedProfile(mapOf("themePreference" to theme))
+        prefs.edit().putString("theme_pref", theme).apply()
+        _themePreference.value = theme
     }
 
     fun unlinkPartner() {

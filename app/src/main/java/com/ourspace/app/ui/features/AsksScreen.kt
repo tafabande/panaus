@@ -238,7 +238,7 @@ fun AsksScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(text = "\"${ask.requestText}\"", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = Color(0xFF1E293B))
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = DateUtils.formatDateTime(ask.createdAt), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFF94A3B8), letterSpacing = 1.sp)
+                        Text(text = DateUtils.formatDateTime(ask.timestamp), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFF94A3B8), letterSpacing = 1.sp)
 
                         if (isPending) {
                             Spacer(modifier = Modifier.height(16.dp))

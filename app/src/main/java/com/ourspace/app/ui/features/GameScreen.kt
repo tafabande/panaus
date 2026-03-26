@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,8 +19,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.window.Dialog
 import com.ourspace.app.data.model.UserProfile
+import com.ourspace.app.data.model.QuizResponse
+import com.ourspace.app.data.model.GameResult
 
 // ── Game content ──────────────────────────────────────────────────────────────
 
@@ -84,20 +88,49 @@ fun GameScreen(
     // Dialog state
     var activeGame by remember { mutableStateOf<GameContent?>(null) }
     var currentQuestionIndex by remember { mutableStateOf(0) }
+    var quizAnswers by remember { mutableStateOf<Map<Int, String>>(emptyMap()) }
+    
+    val quizId = activeGame?.title?.uppercase()?.replace(" ", "_") ?: ""
+    val results by viewModel.quizResults.collectAsState()
+    val currentResult = results[quizId]
+
+    // Start observing results when a game is selected
+    LaunchedEffect(quizId) {
+        if (quizId.isNotEmpty() && userProfile?.coupleId != null) {
+            viewModel.observeQuiz(userProfile.coupleId, quizId)
+        }
+    }
 
     // Show game dialog when a card is tapped
     activeGame?.let { game ->
         GameDialog(
             game = game,
             questionIndex = currentQuestionIndex,
+            answer = quizAnswers[currentQuestionIndex] ?: "",
+            result = currentResult,
+            onAnswerChange = { quizAnswers = quizAnswers + (currentQuestionIndex to it) },
             onNext = {
                 if (currentQuestionIndex < game.questions.size - 1)
-                    currentQuestionIndex++ else currentQuestionIndex = 0
+                    currentQuestionIndex++
             },
             onPrev = {
                 if (currentQuestionIndex > 0) currentQuestionIndex--
             },
-            onDismiss = { activeGame = null; currentQuestionIndex = 0 }
+            onSubmit = {
+                if (userProfile?.coupleId != null) {
+                    val response = QuizResponse(
+                        quizId = quizId,
+                        userId = userProfile.userId,
+                        answers = quizAnswers
+                    )
+                    viewModel.submitQuiz(userProfile.coupleId, response)
+                }
+            },
+            onDismiss = { 
+                activeGame = null
+                currentQuestionIndex = 0
+                quizAnswers = emptyMap()
+            }
         )
     }
 
@@ -110,9 +143,12 @@ fun GameScreen(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp, top = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
+            }
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Play & Connect",
                 fontSize = 28.sp,
@@ -219,8 +255,12 @@ fun InteractiveCard(title: String, subtitle: String, modifier: Modifier = Modifi
 fun GameDialog(
     game: GameContent,
     questionIndex: Int,
+    answer: String,
+    result: GameResult?,
+    onAnswerChange: (String) -> Unit,
     onNext: () -> Unit,
     onPrev: () -> Unit,
+    onSubmit: () -> Unit,
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
@@ -230,7 +270,11 @@ fun GameDialog(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
-            Column(modifier = Modifier.padding(28.dp)) {
+            Column(
+                modifier = Modifier
+                    .padding(28.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -270,27 +314,110 @@ fun GameDialog(
                     )
                 }
 
+                Spacer(modifier = Modifier.height(24.dp))
+
+                OutlinedTextField(
+                    value = answer,
+                    onValueChange = onAnswerChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Your answer...") },
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                if (result != null) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    ComparisonResultView(result, questionIndex)
+                }
+
                 Spacer(modifier = Modifier.height(28.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedButton(
-                        onClick = onPrev,
-                        modifier = Modifier.weight(1f),
-                        enabled = questionIndex > 0,
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("← Prev")
+                    if (questionIndex == 0) {
+                        OutlinedButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Cancel")
+                        }
+                    } else {
+                        OutlinedButton(
+                            onClick = onPrev,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("← Prev")
+                        }
                     }
-                    Button(
-                        onClick = onNext,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                    ) {
-                        Text(if (questionIndex < game.questions.size - 1) "Next →" else "Start over ↺")
+                    
+                    if (questionIndex < game.questions.size - 1) {
+                        Button(
+                            onClick = onNext,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Text("Next →")
+                        }
+                    } else {
+                        Button(
+                            onClick = onSubmit,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                        ) {
+                            Text("Submit & Sync")
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ComparisonResultView(result: GameResult, questionIndex: Int) {
+    val myAnswer = result.user1Answers[questionIndex] ?: "..."
+    val partnerAnswer = result.user2Answers[questionIndex] ?: "..."
+    val isMatch = result.matches.contains(questionIndex)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (isMatch) Color(0xFFE8F5E9) else Color(0xFFFFEBEE))
+            .padding(16.dp)
+    ) {
+        Text(
+            if (isMatch) "✨ It's a match!" else "⌛ Different vibes",
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            color = if (isMatch) Color(0xFF2E7D32) else Color(0xFFC62828)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Me:", fontSize = 10.sp, color = Color.Gray)
+                Text(myAnswer, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+            }
+            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                Text("Partner:", fontSize = 10.sp, color = Color.Gray)
+                Text(partnerAnswer, fontSize = 13.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.End)
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        LinearProgressIndicator(
+            progress = { result.matchPercentage / 100f },
+            modifier = Modifier.fillMaxWidth().height(4.dp),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+        )
+        Text(
+            "Overall Match: ${result.matchPercentage.toInt()}%",
+            fontSize = 11.sp,
+            modifier = Modifier.padding(top = 4.dp),
+            color = MaterialTheme.colorScheme.primary
+        )
     }
 }

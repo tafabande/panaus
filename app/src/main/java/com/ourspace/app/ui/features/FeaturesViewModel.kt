@@ -34,12 +34,26 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
     private val _interactions = MutableStateFlow<List<Interaction>>(emptyList())
     val interactions: StateFlow<List<Interaction>> = _interactions.asStateFlow()
 
+    private val _memories = MutableStateFlow<List<Memory>>(emptyList())
+    val memories: StateFlow<List<Memory>> = _memories.asStateFlow()
+
+    private val _optimisticMemories = MutableStateFlow<List<Memory>>(emptyList())
+    val optimisticMemories: StateFlow<List<Memory>> = _optimisticMemories.asStateFlow()
+
+    private val _quizResults = MutableStateFlow<Map<String, GameResult?>>(emptyMap())
+    val quizResults: StateFlow<Map<String, GameResult?>> = _quizResults.asStateFlow()
+
+    private val _partnerMood = MutableStateFlow<Mood?>(null)
+    val partnerMood: StateFlow<Mood?> = _partnerMood.asStateFlow()
+
     private var notesJob: Job? = null
     private var todosJob: Job? = null
     private var eventsJob: Job? = null
     private var moodsJob: Job? = null
     private var asksJob: Job? = null
     private var interactionsJob: Job? = null
+    private var memoriesJob: Job? = null
+    private var partnerMoodJob: Job? = null
 
     // Load Data based on UserProfile
     fun startObserving(userProfile: UserProfile) {
@@ -86,20 +100,90 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
                 .catch { e -> GlobalErrorHandler.recordException(e) }
                 .collect { _interactions.value = it }
         }
+
+        memoriesJob?.cancel()
+        memoriesJob = viewModelScope.launch {
+            repository.observeMemories(coupleId)
+                .catch { e -> GlobalErrorHandler.recordException(e) }
+                .collect { _memories.value = it }
+        }
+
+        // Observe partner mood
+        val partnerId = userProfile.partnerId ?: ""
+        if (partnerId.isNotEmpty()) {
+            partnerMoodJob?.cancel()
+            partnerMoodJob = viewModelScope.launch {
+                repository.observePartnerMood(coupleId, partnerId)
+                    .catch { e -> GlobalErrorHandler.recordException(e) }
+                    .collect { _partnerMood.value = it }
+            }
+        }
     }
 
-    fun sendNote(coupleId: String, senderId: String, receiverId: String?, content: String) {
-        if (content.isBlank() || receiverId == null) return
+    fun uploadMemory(coupleId: String, userId: String, localUri: android.net.Uri) {
+        val tempId = java.util.UUID.randomUUID().toString()
+        val optimisticMemory = Memory(
+            id = tempId,
+            userId = userId,
+            imageUrl = localUri.toString(),
+            timestamp = System.currentTimeMillis(),
+            status = "SENDING"
+        )
+        
+        // Add to optimistic list
+        _optimisticMemories.value = listOf(optimisticMemory) + _optimisticMemories.value
+        
         viewModelScope.launch {
-            GlobalErrorHandler.runWithCatch {
-                val note = Note(
-                    coupleId = coupleId,
-                    senderId = senderId,
-                    receiverId = receiverId,
-                    content = content.trim(),
-                    createdAt = DateUtils.getCurrentIsoTime()
-                )
-                repository.sendNote(note)
+            try {
+                repository.uploadMemory(coupleId, optimisticMemory, localUri)
+                // Success: remove from optimistic (Firestore listener will pick it up)
+                _optimisticMemories.value = _optimisticMemories.value.filter { it.id != tempId }
+            } catch (e: Exception) {
+                GlobalErrorHandler.recordException(e)
+                // Failed: update status for UI
+                _optimisticMemories.value = _optimisticMemories.value.map {
+                    if (it.id == tempId) it.copy(status = "FAILED") else it
+                }
+            }
+        }
+    }
+
+    fun submitQuiz(coupleId: String, response: QuizResponse) {
+        viewModelScope.launch {
+            try {
+                repository.submitQuizResponse(coupleId, response)
+            } catch (e: Exception) {
+                GlobalErrorHandler.recordException(e)
+            }
+        }
+    }
+
+    fun observeQuiz(coupleId: String, quizId: String) {
+        viewModelScope.launch {
+            repository.observeQuizResults(coupleId, quizId)
+                .catch { e -> GlobalErrorHandler.recordException(e) }
+                .collect { result ->
+                    _quizResults.value = _quizResults.value + (quizId to result)
+                }
+        }
+    }
+
+    fun saveNote(coupleId: String, note: Note) {
+        viewModelScope.launch {
+            try {
+                repository.saveNote(coupleId, note)
+            } catch (e: Exception) {
+                GlobalErrorHandler.recordException(e)
+            }
+        }
+    }
+
+    fun deleteNote(coupleId: String, noteId: String) {
+        viewModelScope.launch {
+            try {
+                repository.deleteNote(coupleId, noteId)
+            } catch (e: Exception) {
+                GlobalErrorHandler.recordException(e)
             }
         }
     }
@@ -115,7 +199,7 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
                     category = category,
                     isCompleted = false,
                     createdBy = creatorId,
-                    createdAt = DateUtils.getCurrentIsoTime(),
+                    timestamp = System.currentTimeMillis(),
                     completedAt = null
                 )
                 repository.addTodo(todo)
@@ -126,7 +210,7 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
     fun toggleTodo(todo: TodoItem) {
         viewModelScope.launch {
             GlobalErrorHandler.runWithCatch {
-                val completedAt = if (!todo.isCompleted) DateUtils.getCurrentIsoTime() else null
+                val completedAt = if (!todo.isCompleted) System.currentTimeMillis() else null
                 repository.toggleTodo(todo.id, !todo.isCompleted, completedAt)
             }
         }
@@ -151,7 +235,7 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
                     time = time,
                     category = category,
                     createdBy = creatorId,
-                    createdAt = DateUtils.getCurrentIsoTime()
+                    timestamp = System.currentTimeMillis()
                 )
                 repository.addEvent(event)
             }
@@ -167,9 +251,9 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
                     moodValue = moodValue,
                     emoji = emoji,
                     note = note.trim(),
-                    createdAt = DateUtils.getCurrentIsoTime()
+                    timestamp = System.currentTimeMillis()
                 )
-                repository.addMood(mood)
+                repository.updateMood(mood)
             }
         }
     }
@@ -186,7 +270,7 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
                     requestType = type,
                     status = "pending",
                     responseText = "",
-                    createdAt = DateUtils.getCurrentIsoTime(),
+                    timestamp = System.currentTimeMillis(),
                     respondedAt = null
                 )
                 repository.addAsk(ask)
@@ -197,7 +281,7 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
     fun updateAskStatus(askId: String, status: String) {
         viewModelScope.launch {
             GlobalErrorHandler.runWithCatch {
-                repository.updateAskStatus(askId, status, DateUtils.getCurrentIsoTime())
+                repository.updateAskStatus(askId, status, System.currentTimeMillis())
             }
         }
     }
@@ -209,7 +293,7 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
                     coupleId = coupleId,
                     senderId = senderId,
                     type = type,
-                    createdAt = DateUtils.getCurrentIsoTime()
+                    timestamp = System.currentTimeMillis()
                 )
                 repository.sendInteraction(interaction)
             }

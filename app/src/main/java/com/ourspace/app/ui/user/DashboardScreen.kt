@@ -153,7 +153,7 @@ fun DashboardScreen(
                     
                     if (lastInteraction != null) {
                         Text(
-                            "Last ${lastInteraction.type}: ${DateUtils.formatRelativeTime(lastInteraction.createdAt)}",
+                            "Last ${lastInteraction.type}: ${DateUtils.formatRelativeTime(lastInteraction.timestamp)}",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
                         )

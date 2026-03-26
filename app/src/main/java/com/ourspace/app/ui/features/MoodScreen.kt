@@ -192,7 +192,7 @@ fun MoodScreen(
                                         color = Color(0xFF1E293B)
                                     )
                                     Text(
-                                        text = DateUtils.formatDateTime(mood.createdAt),
+                                        text = DateUtils.formatDateTime(mood.timestamp),
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF94A3B8)

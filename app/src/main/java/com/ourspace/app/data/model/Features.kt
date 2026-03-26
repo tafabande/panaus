@@ -4,9 +4,10 @@ data class Note(
     var id: String = "",
     val coupleId: String = "",
     val senderId: String = "",
-    val receiverId: String = "",
+    val title: String = "",
     val content: String = "",
-    val createdAt: String = ""
+    val color: String = "#FFFFFF",
+    val timestamp: Long = System.currentTimeMillis()
 )
 
 data class TodoItem(
@@ -17,8 +18,8 @@ data class TodoItem(
     val category: String = "General",
     val isCompleted: Boolean = false,
     val createdBy: String = "",
-    val createdAt: String = "",
-    val completedAt: String? = null
+    val timestamp: Long = System.currentTimeMillis(),
+    val completedAt: Long? = null
 )
 
 data class CalendarEvent(
@@ -29,7 +30,7 @@ data class CalendarEvent(
     val time: String = "",
     val category: String = "",
     val createdBy: String = "",
-    val createdAt: String = ""
+    val timestamp: Long = System.currentTimeMillis()
 )
 
 data class Mood(
@@ -39,7 +40,7 @@ data class Mood(
     val moodValue: Int = 0,
     val emoji: String = "",
     val note: String = "",
-    val createdAt: String = ""
+    val timestamp: Long = System.currentTimeMillis()
 )
 
 data class Ask(
@@ -51,8 +52,8 @@ data class Ask(
     val requestType: String = "",
     val status: String = "",
     val responseText: String = "",
-    val createdAt: String = "",
-    val respondedAt: String? = null
+    val timestamp: Long = System.currentTimeMillis(),
+    val respondedAt: Long? = null
 )
 
 data class Interaction(
@@ -60,5 +61,31 @@ data class Interaction(
     val coupleId: String = "",
     val senderId: String = "",
     val type: String = "poke", // poke, hug, kiss
-    val createdAt: String = ""
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+data class Memory(
+    var id: String = "",
+    val userId: String = "",
+    val imageUrl: String = "",
+    val timestamp: Long = System.currentTimeMillis(),
+    val status: String = "UPLOADED" // UPLOADED, SENDING, FAILED
+)
+
+data class QuizResponse(
+    var id: String = "",
+    val quizId: String = "", // e.g., "OUR_STORY"
+    val userId: String = "",
+    val answers: Map<Int, String> = emptyMap(), // questionIndex -> answer
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+data class GameResult(
+    val quizId: String = "",
+    val user1Id: String = "",
+    val user2Id: String = "",
+    val user1Answers: Map<Int, String> = emptyMap(),
+    val user2Answers: Map<Int, String> = emptyMap(),
+    val matches: List<Int> = emptyList(), // questionIndices where answers match
+    val matchPercentage: Float = 0f
 )

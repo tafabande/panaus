@@ -34,16 +34,20 @@ fun MemoriesScreen(
     viewModel: FeaturesViewModel,
     onBack: () -> Unit = {}
 ) {
-    // Local list of picked photo URIs (in-session; full cloud upload is a future feature)
-    var pickedPhotos by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    val memories by viewModel.memories.collectAsState()
+    val optimisticMemories by viewModel.optimisticMemories.collectAsState()
+    val allMemories = (optimisticMemories + memories)
+    
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Multi-photo picker
     val photoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 10)
     ) { uris ->
-        if (uris.isNotEmpty()) {
-            pickedPhotos = (pickedPhotos + uris).distinct()
+        if (uris.isNotEmpty() && userProfile != null) {
+            uris.forEach { uri ->
+                viewModel.uploadMemory(userProfile.coupleId ?: "", userProfile.userId, uri)
+            }
         }
     }
 
@@ -77,7 +81,7 @@ fun MemoriesScreen(
             }
         }
     ) { innerPadding ->
-        if (pickedPhotos.isEmpty()) {
+        if (allMemories.isEmpty()) {
             // Show placeholder grid while no photos chosen
             LazyVerticalStaggeredGrid(
                 columns = StaggeredGridCells.Fixed(2),
@@ -103,17 +107,41 @@ fun MemoriesScreen(
                 verticalItemSpacing = 16.dp,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(pickedPhotos) { uri ->
-                    val height = 150.dp + Random.nextInt(0, 100).dp
-                    AsyncImage(
-                        model = uri,
-                        contentDescription = "Memory photo",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(height)
-                            .clip(RoundedCornerShape(16.dp)),
-                        contentScale = ContentScale.Crop
-                    )
+                items(allMemories, key = { it.id }) { memory ->
+                    val height = 150.dp + Random(memory.id.hashCode()).nextInt(0, 100).dp
+                    Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))) {
+                        AsyncImage(
+                            model = memory.imageUrl,
+                            contentDescription = "Memory photo",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(height),
+                            contentScale = ContentScale.Crop
+                        )
+                        
+                        if (memory.status == "SENDING") {
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .background(Color.Black.copy(alpha = 0.3f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                                    Text("Sending...", color = Color.White, fontSize = 10.sp, modifier = Modifier.padding(top = 4.dp))
+                                }
+                            }
+                        } else if (memory.status == "FAILED") {
+                             Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .background(Color.Red.copy(alpha = 0.5f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("Failed", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
                 }
             }
         }

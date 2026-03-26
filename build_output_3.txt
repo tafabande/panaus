@@ -34,8 +34,7 @@
 > Task :app:writeDebugSigningConfigVersions UP-TO-DATE
 
 > Task :app:compileDebugKotlin FAILED
-e: file:///C:/Users/User/Desktop/us/app/src/main/java/com/ourspace/app/data/repository/FeaturesRepository.kt:292:1 Syntax error: Expecting a top level declaration.
-e: file:///C:/Users/User/Desktop/us/app/src/main/java/com/ourspace/app/ui/features/NotesScreen.kt:275:2 Syntax error: imports are only allowed in the beginning of file.
+e: file:///C:/Users/User/Desktop/us/app/src/main/java/com/ourspace/app/ui/features/MoodScreen.kt:195:78 Unresolved reference 'createdAt'.
 
 [Incubating] Problems report is available at: file:///C:/Users/User/Desktop/us/build/reports/problems/problems-report.html
 
@@ -58,5 +57,5 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.3.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 6s
+BUILD FAILED in 19s
 29 actionable tasks: 1 executed, 28 up-to-date

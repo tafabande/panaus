@@ -31,15 +31,22 @@ class UserRepository {
 
     suspend fun pairWithPartner(currentUserId: String, partnerCode: String): Result<Unit> = withContext(Dispatchers.IO) {
         return@withContext try {
-            if (currentUserId == partnerCode) {
-                return@withContext Result.failure(Exception("You can't pair with yourself."))
+            // Search for partner by their 6-digit partnerCode
+            val partnerQuery = db.collection("users")
+                .whereEqualTo("partnerCode", partnerCode)
+                .get()
+                .await()
+
+            if (partnerQuery.isEmpty) {
+                return@withContext Result.failure(Exception("Invalid partner code. Partner not found."))
             }
 
-            val partnerRef = db.collection("users").document(partnerCode)
-            val partnerSnap = partnerRef.get().await()
+            val partnerSnap = partnerQuery.documents.first()
+            val partnerId = partnerSnap.id
+            val partnerRef = partnerSnap.reference
 
-            if (!partnerSnap.exists()) {
-                return@withContext Result.failure(Exception("Invalid invite code. Partner not found."))
+            if (currentUserId == partnerId) {
+                return@withContext Result.failure(Exception("You can't pair with yourself."))
             }
 
             val partnerData = partnerSnap.toObject(UserProfile::class.java)
@@ -47,7 +54,7 @@ class UserRepository {
                 return@withContext Result.failure(Exception("This user is already paired with someone."))
             }
 
-            val coupleId = listOf(currentUserId, partnerCode).sorted().joinToString("_")
+            val coupleId = listOf(currentUserId, partnerId).sorted().joinToString("_")
 
             val coupleData = hashMapOf(
                 "coupleId" to coupleId,
@@ -121,6 +128,90 @@ class UserRepository {
                 "coupleId", null
             ).await()
 
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun sendPairingRequest(fromUserId: String, toPartnerCode: String): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            // 1. Find the partner by code
+            val partnerQuery = db.collection("users")
+                .whereEqualTo("partnerCode", toPartnerCode)
+                .get()
+                .await()
+
+            if (partnerQuery.isEmpty) {
+                return@withContext Result.failure(Exception("Partner code not found."))
+            }
+
+            val partnerSnap = partnerQuery.documents.first()
+            val partnerId = partnerSnap.id
+
+            if (fromUserId == partnerId) {
+                return@withContext Result.failure(Exception("You cannot pair with yourself."))
+            }
+
+            // 2. Create the request
+            val requestId = listOf(fromUserId, partnerId).sorted().joinToString("_")
+            val requestData = hashMapOf(
+                "fromId" to fromUserId,
+                "toId" to partnerId,
+                "status" to "PENDING",
+                "createdAt" to DateUtils.getCurrentIsoTime()
+            )
+
+            db.collection("pairingRequests").document(requestId).set(requestData).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    fun observePairingRequest(userId: String): Flow<Map<String, Any>?> = callbackFlow {
+        // Observe incoming requests WHERE toId == userId
+        val incomingListener = db.collection("pairingRequests")
+            .whereEqualTo("toId", userId)
+            .whereEqualTo("status", "PENDING")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) { close(error); return@addSnapshotListener }
+                val request = snapshot?.documents?.firstOrNull()?.data
+                if (request != null) {
+                    trySend(request)
+                } else {
+                    // If no incoming, check if we have an outgoing one
+                    // In a real app, you'd combine these flows or use a more complex query
+                    trySend(null)
+                }
+            }
+        awaitClose { incomingListener.remove() }
+    }
+
+    suspend fun acceptPairingRequest(fromId: String, toId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val requestId = listOf(fromId, toId).sorted().joinToString("_")
+            val coupleId = requestId // Same ID for simplicity
+
+            val batch = db.batch()
+            
+            // 1. Update request status
+            batch.update(db.collection("pairingRequests").document(requestId), "status", "ACCEPTED")
+            
+            // 2. Create couple
+            val coupleData = hashMapOf(
+                "coupleId" to coupleId,
+                "user1Id" to fromId,
+                "user2Id" to toId,
+                "createdAt" to DateUtils.getCurrentIsoTime()
+            )
+            batch.set(db.collection("couples").document(coupleId), coupleData)
+            
+            // 3. Update users
+            batch.update(db.collection("users").document(fromId), mapOf("partnerId" to toId, "coupleId" to coupleId))
+            batch.update(db.collection("users").document(toId), mapOf("partnerId" to fromId, "coupleId" to coupleId))
+            
+            batch.commit().await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

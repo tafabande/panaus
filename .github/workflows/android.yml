@@ -41,23 +41,43 @@ jobs:
         echo "analytics.property.id=$ANALYTICS_PROPERTY_ID" >> local.properties
         echo "premium.sku=$PREMIUM_SUBSCRIPTION_SKU" >> local.properties
 
-    - name: Build with Gradle
+    - name: Build Debug APK
       run: ./gradlew assembleDebug
 
-    - name: Upload APK
+    - name: Build Release APK
+      run: ./gradlew assembleRelease
+
+    - name: Upload Debug APK
       uses: actions/upload-artifact@v6
       with:
         name: app-debug
         path: app/build/outputs/apk/debug/app-debug.apk
 
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v6
+      with:
+        name: app-release
+        path: app/build/outputs/apk/release/app-release-unsigned.apk
+
     - name: Create Release
       if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: build-${{ github.run_number }}
-        name: Auto-Build Release #${{ github.run_number }}
-        body: "Automated build triggered by push to master. \nCommit: ${{ github.sha }}"
-        files: app/build/outputs/apk/debug/app-debug.apk
+        tag_name: v${{ github.run_number }}
+        name: Aura Amour Release v${{ github.run_number }}
+        body: |
+          ### Aura Amour Automated Release
+          
+          This release contains the latest features and architectural improvements:
+          - **Shared Notes & Wellness**: Premium grid-based notes and partner mood tracking.
+          - **Shared Calendar**: Horizontal overview with native date/time pickers.
+          - **Play Connect**: Real-time quiz comparison engine.
+          - **Reliability**: Firestore "Upsert" logic with `SetOptions.merge()`.
+          
+          *Commit: ${{ github.sha }}*
+        files: |
+          app/build/outputs/apk/debug/app-debug.apk
+          app/build/outputs/apk/release/app-release-unsigned.apk
         draft: false
         prerelease: false
       env:

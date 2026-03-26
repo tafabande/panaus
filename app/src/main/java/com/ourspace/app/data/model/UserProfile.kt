@@ -16,5 +16,6 @@ data class UserProfile(
     val aestheticNote: String? = null,
     val mood: String? = null,
     val wellnessGoal: String? = null,
-    val themePreference: String = "SYSTEM" // "LIGHT", "DARK", "SYSTEM"
+    val themePreference: String = "SYSTEM", // "LIGHT", "DARK", "SYSTEM"
+    val partnerCode: String? = null
 )

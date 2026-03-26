@@ -11,3 +11,8 @@
 -keepnames class kotlinx.coroutines.internal.MainDispatcherLoader {}
 -keepnames class kotlinx.coroutines.android.HandlerContext {}
 -keep class kotlinx.coroutines.android.AndroidDispatcherFactory { *; }
+
+# Preserve Firestore Model Classes
+-keep class com.ourspace.app.data.model.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*

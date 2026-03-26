@@ -27,6 +27,7 @@ class AuthRepository {
         return@withContext try {
             val result = auth.createUserWithEmailAndPassword(email, pass).await()
             val userId = result.user?.uid ?: throw Exception("User ID is null")
+            val partnerCode = generateUniquePartnerCode()
 
             val userProfile = UserProfile(
                 userId = userId,
@@ -34,7 +35,8 @@ class AuthRepository {
                 email = email,
                 partnerId = null,
                 coupleId = null,
-                createdAt = DateUtils.getCurrentIsoTime()
+                createdAt = DateUtils.getCurrentIsoTime(),
+                partnerCode = partnerCode
             )
 
             db.collection("users").document(userId).set(userProfile).await()
@@ -42,6 +44,21 @@ class AuthRepository {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private suspend fun generateUniquePartnerCode(): String {
+        var code: String
+        var exists: Boolean
+        do {
+            code = (100000..999999).random().toString()
+            // Check if this code already exists in the "users" collection
+            val snapshot = db.collection("users")
+                .whereEqualTo("partnerCode", code)
+                .get()
+                .await()
+            exists = !snapshot.isEmpty
+        } while (exists)
+        return code
     }
 
     fun logout() {

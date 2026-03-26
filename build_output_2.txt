@@ -34,8 +34,7 @@
 > Task :app:writeDebugSigningConfigVersions UP-TO-DATE
 
 > Task :app:compileDebugKotlin FAILED
-e: file:///C:/Users/User/Desktop/us/app/src/main/java/com/ourspace/app/data/repository/FeaturesRepository.kt:292:1 Syntax error: Expecting a top level declaration.
-e: file:///C:/Users/User/Desktop/us/app/src/main/java/com/ourspace/app/ui/features/NotesScreen.kt:275:2 Syntax error: imports are only allowed in the beginning of file.
+e: file:///C:/Users/User/Desktop/us/app/src/main/java/com/ourspace/app/data/repository/FeaturesRepository.kt:289:6 Syntax error: Missing '}.
 
 [Incubating] Problems report is available at: file:///C:/Users/User/Desktop/us/build/reports/problems/problems-report.html
 

@@ -80,5 +80,9 @@ service cloud.firestore {
       allow read: if isMemberOfCouple(resource.data.coupleId);
       allow create, update: if isMemberOfCouple(request.resource.data.coupleId);
     }
+    match /interactions/{id} {
+      allow read: if isMemberOfCouple(resource.data.coupleId);
+      allow create: if isMemberOfCouple(request.resource.data.coupleId);
+    }
   }
 }
