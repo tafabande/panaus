@@ -61,7 +61,7 @@ fun DashboardScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .systemBarsPadding()
+                .statusBarsPadding()
                 .padding(24.dp)
                 .verticalScroll(scrollState)
         ) {
@@ -107,13 +107,21 @@ fun DashboardScreen(
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
+                val userColor = com.ourspace.app.ui.theme.AuraColors.fromName(userProfile?.themeColor)
                 Box(
                     modifier = Modifier
                         .size(48.dp)
+                        .border(2.dp, userColor, CircleShape)
+                        .padding(2.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primaryContainer)
                 ) {
-                    // Profile Avatar placeholder
+                    com.ourspace.app.ui.components.AsyncImage(
+                        model = userProfile?.avatarUrl ?: "https://api.dicebear.com/7.x/thumbs/png?seed=${userProfile?.userId}",
+                        contentDescription = "Profile",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = androidx.compose.layout.ContentScale.Crop
+                    )
                 }
             }
         }
@@ -287,17 +295,6 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
         
-        Button(
-            onClick = {
-                userViewModel.logout()
-                onLogout()
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Text("Debug Logout", color = MaterialTheme.colorScheme.onErrorContainer)
-        }
-        
         Spacer(modifier = Modifier.height(100.dp)) // NavBar cushion
     }
 
@@ -308,10 +305,30 @@ fun DashboardScreen(
         )
     }
 
-    // Interaction Pulse for incoming pokes
-    val incomingPoke = interactions.firstOrNull { it.senderId != userProfile?.userId }
-    if (incomingPoke != null) {
-        IncomingInteractionPulse(incomingPoke)
+    // Interaction Pulse for incoming pokes (only those that are UNREAD and from PARTNER)
+    val unreadPartnerPokes = interactions.filter { 
+        it.status == "unread" && it.senderId != userProfile?.userId 
+    }.sortedByDescending { it.timestamp }
+    
+    val latestPoke = unreadPartnerPokes.firstOrNull()
+    
+    AnimatedVisibility(
+        visible = latestPoke != null,
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically()
+    ) {
+        latestPoke?.let { poke ->
+            IncomingInteractionPulse(
+                interaction = poke,
+                onDismiss = { featuresViewModel.markInteractionAsRead(poke.id) },
+                onPokeBack = {
+                    userProfile?.let { u ->
+                        featuresViewModel.sendInteraction(u.coupleId ?: "", u.userId, "poke")
+                        featuresViewModel.markInteractionAsRead(poke.id)
+                    }
+                }
+            )
+        }
     }
 
     // Lovely floating decor
@@ -380,13 +397,17 @@ fun RepeatingHearts() {
     }
 }
 @Composable
-fun IncomingInteractionPulse(interaction: Interaction) {
+fun IncomingInteractionPulse(
+    interaction: Interaction,
+    onDismiss: () -> Unit,
+    onPokeBack: () -> Unit
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = 1.2f,
+        targetValue = 1.05f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
+            animation = tween(1200, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "scale"
@@ -398,23 +419,54 @@ fun IncomingInteractionPulse(interaction: Interaction) {
             .padding(16.dp),
         contentAlignment = Alignment.TopCenter
     ) {
-        Card(
+        ElevatedCard(
             modifier = Modifier
                 .graphicsLayer(scaleX = scale, scaleY = scale)
-                .clip(RoundedCornerShape(50))
-                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f))
-                .padding(horizontal = 24.dp, vertical = 12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                .fillMaxWidth(0.9f)
+                .clip(RoundedCornerShape(24.dp)),
+            colors = CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.95f)
+            ),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 12.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(if (interaction.type == "poke") "👉" else "❤️", fontSize = 24.sp)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "You've been ${interaction.type}d!",
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    fontWeight = FontWeight.Bold
-                )
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(if (interaction.type == "poke") "👉" else "❤️", fontSize = 28.sp)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "You've been ${interaction.type}d!",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f))
+                    ) {
+                        Text("Dismiss", color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    }
+                    
+                    Button(
+                        onClick = onPokeBack,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Poke Back")
+                    }
+                }
             }
         }
     }

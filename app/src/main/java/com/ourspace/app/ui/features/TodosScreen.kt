@@ -24,6 +24,9 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ourspace.app.data.model.UserProfile
+import com.ourspace.app.ui.components.EmptyState
+import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
+import androidx.compose.material.icons.filled.PlaylistAddCheck
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,22 +53,22 @@ fun TodosScreen(
                 title = { Text("Shared To-Dos", fontSize = 20.sp, fontWeight = FontWeight.Medium) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color(0xFF64748B))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
                 actions = {
                     IconButton(onClick = { showForm = !showForm }) {
-                        Icon(Icons.Filled.Add, contentDescription = "Add Todo", tint = Color(0xFFF43F5E))
+                        Icon(Icons.Filled.Add, contentDescription = "Add Todo", tint = MaterialTheme.colorScheme.primary)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         }
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFFAFAFA))
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -77,7 +80,7 @@ fun TodosScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                     ) {
                         Column(modifier = Modifier.padding(20.dp)) {
@@ -147,7 +150,7 @@ fun TodosScreen(
                                     }
                                 },
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF43F5E))
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                             ) {
                                 Text("Add Task")
                             }
@@ -158,14 +161,12 @@ fun TodosScreen(
 
             if (activeTodos.isEmpty() && completedTodos.isEmpty() && !showForm) {
                 item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 40.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("You're all caught up!", color = Color(0xFF94A3B8))
-                    }
+                    EmptyState(
+                        icon = Icons.AutoMirrored.Filled.PlaylistAddCheck,
+                        title = "No To-Dos Yet",
+                        description = "Start by adding a task for you or your partner.",
+                        modifier = Modifier.padding(top = 40.dp)
+                    )
                 }
             }
 
@@ -173,7 +174,7 @@ fun TodosScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
                     Row(
@@ -181,10 +182,10 @@ fun TodosScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = { viewModel.toggleTodo(todo) }) {
-                            Icon(Icons.Outlined.Circle, contentDescription = "Complete", tint = Color(0xFFFDA4AF))
+                            Icon(Icons.Outlined.Circle, contentDescription = "Complete", tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
                         }
                         Column(modifier = Modifier.weight(1f).padding(horizontal = 8.dp)) {
-                            Text(todo.title, fontSize = 14.sp, color = Color(0xFF1E293B))
+                            Text(todo.title, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 SuggestionChip(
                                     onClick = {},
@@ -195,7 +196,7 @@ fun TodosScreen(
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = if (todo.assignedTo == userProfile?.userId) "FOR ME" else "FOR PARTNER",
-                                        color = Color(0xFFF43F5E),
+                                        color = MaterialTheme.colorScheme.primary,
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -203,7 +204,7 @@ fun TodosScreen(
                             }
                         }
                         IconButton(onClick = { viewModel.deleteTodo(todo.id) }) {
-                            Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = Color(0xFFFECDD3))
+                            Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
                         }
                     }
                 }
@@ -217,7 +218,7 @@ fun TodosScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
                         Row(
@@ -225,17 +226,17 @@ fun TodosScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             IconButton(onClick = { viewModel.toggleTodo(todo) }) {
-                                Icon(Icons.Filled.CheckCircle, contentDescription = "Uncomplete", tint = Color(0xFF10B981))
+                                Icon(Icons.Filled.CheckCircle, contentDescription = "Uncomplete", tint = Color(0xFF10B981)) // Keep green for success
                             }
                             Text(
                                 text = todo.title,
                                 modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
                                 fontSize = 14.sp,
-                                color = Color(0xFF94A3B8),
+                                color = MaterialTheme.colorScheme.outline,
                                 textDecoration = TextDecoration.LineThrough
                             )
                             IconButton(onClick = { viewModel.deleteTodo(todo.id) }) {
-                                Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = Color(0xFFFECDD3))
+                                Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error.copy(alpha = 0.4f))
                             }
                         }
                     }

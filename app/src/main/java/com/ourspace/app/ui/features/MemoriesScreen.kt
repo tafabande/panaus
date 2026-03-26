@@ -40,14 +40,17 @@ fun MemoriesScreen(
     
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Multi-photo picker
+    var pendingUri by remember { mutableStateOf<Uri?>(null) }
+    var showCaptionDialog by remember { mutableStateOf(false) }
+    var captionText by remember { mutableStateOf("") }
+
+    // Multi-photo picker replaced with single for captioning flow
     val photoPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 10)
-    ) { uris ->
-        if (uris.isNotEmpty() && userProfile != null) {
-            uris.forEach { uri ->
-                viewModel.uploadMemory(userProfile.coupleId ?: "", userProfile.userId, uri)
-            }
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            pendingUri = uri
+            showCaptionDialog = true
         }
     }
 
@@ -118,7 +121,26 @@ fun MemoriesScreen(
                                 .height(height),
                             contentScale = ContentScale.Crop
                         )
-                        
+
+                        // Caption Overlay
+                        if (memory.caption.isNotBlank()) {
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .fillMaxWidth()
+                                    .background(Color.Black.copy(alpha = 0.4f))
+                                    .padding(8.dp)
+                            ) {
+                                Text(
+                                    text = memory.caption,
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    maxLines = 2,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+
                         if (memory.status == "SENDING") {
                             Box(
                                 modifier = Modifier
@@ -135,7 +157,7 @@ fun MemoriesScreen(
                              Box(
                                 modifier = Modifier
                                     .matchParentSize()
-                                    .background(Color.Red.copy(alpha = 0.5f)),
+                                    .background(MaterialTheme.colorScheme.error.copy(alpha = 0.5f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text("Failed", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -145,6 +167,46 @@ fun MemoriesScreen(
                 }
             }
         }
+    }
+
+    if (showCaptionDialog && pendingUri != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                showCaptionDialog = false
+                pendingUri = null
+                captionText = ""
+            },
+            title = { Text("Add Caption") },
+            text = {
+                OutlinedTextField(
+                    value = captionText,
+                    onValueChange = { captionText = it },
+                    label = { Text("Say something about this memory...") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (userProfile != null && pendingUri != null) {
+                        viewModel.uploadMemory(userProfile.coupleId ?: "", userProfile.userId, pendingUri!!, captionText)
+                    }
+                    showCaptionDialog = false
+                    pendingUri = null
+                    captionText = ""
+                }) {
+                    Text("Upload", color = MaterialTheme.colorScheme.primary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    showCaptionDialog = false
+                    pendingUri = null
+                    captionText = ""
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 

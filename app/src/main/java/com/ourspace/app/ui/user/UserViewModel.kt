@@ -16,6 +16,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import com.ourspace.app.util.GlobalErrorHandler
+import android.util.Log
+
+private const val TAG = "UserViewModel"
 
 sealed class PairingState {
     object Idle : PairingState()
@@ -26,7 +29,7 @@ sealed class PairingState {
     data class Error(val message: String) : PairingState()
 }
 
-class UserViewModel(application: Application, private val repository: UserRepository = UserRepository()) : AndroidViewModel(application) {
+class UserViewModel(application: Application, private val repository: UserRepository) : AndroidViewModel(application) {
     private val prefs = application.getSharedPreferences("aura_amour_prefs", Context.MODE_PRIVATE)
 
     private val _themePreference = MutableStateFlow(prefs.getString("theme_pref", "SYSTEM") ?: "SYSTEM")
@@ -49,8 +52,10 @@ class UserViewModel(application: Application, private val repository: UserReposi
     private var requestObserverJob: Job? = null
 
     init {
+        Log.d(TAG, "Initializing UserViewModel and setting up AuthStateListener")
         FirebaseAuth.getInstance().addAuthStateListener { auth ->
             val user = auth.currentUser
+            Log.d(TAG, "AuthState changed: User is ${if (user != null) "Logged in (${user.uid})" else "Logged out"}")
             if (user != null) {
                 observeUser(user.uid)
                 observeRequests(user.uid)
@@ -63,12 +68,19 @@ class UserViewModel(application: Application, private val repository: UserReposi
     }
 
     private fun observeUser(uid: String) {
+        Log.d(TAG, "Calling repository.observeUser for $uid")
         observerJob?.cancel()
         observerJob = viewModelScope.launch {
             repository.observeUser(uid)
-                .catch { e -> GlobalErrorHandler.recordException(e) }
+                .catch { e -> 
+                    Log.e(TAG, "Error in observeUser flow for $uid", e)
+                    GlobalErrorHandler.recordException(e) 
+                }
                 .collectLatest { profile ->
+                    Log.d(TAG, "Received profile update for $uid: ${profile?.name ?: "null/not-found"}")
                     _userProfile.value = profile
+                    
+                    // Observe partner independently
                     if (profile?.partnerId != null) {
                         observePartner(profile.partnerId)
                     } else {

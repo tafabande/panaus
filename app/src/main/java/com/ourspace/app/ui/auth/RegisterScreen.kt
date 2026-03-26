@@ -15,12 +15,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
+import com.ourspace.app.ui.ViewModelFactory
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
     onNavigateToLogin: () -> Unit,
     onRegisterSuccess: () -> Unit,
-    viewModel: AuthViewModel = viewModel()
+    factory: ViewModelFactory,
+    viewModel: AuthViewModel = viewModel(factory = factory)
 ) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }

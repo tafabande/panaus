@@ -61,13 +61,16 @@ data class Interaction(
     val coupleId: String = "",
     val senderId: String = "",
     val type: String = "poke", // poke, hug, kiss
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val status: String = "unread" // unread, read
 )
 
 data class Memory(
     var id: String = "",
     val userId: String = "",
+    val coupleId: String = "",
     val imageUrl: String = "",
+    val caption: String = "",
     val timestamp: Long = System.currentTimeMillis(),
     val status: String = "UPLOADED" // UPLOADED, SENDING, FAILED
 )
@@ -89,3 +92,11 @@ data class GameResult(
     val matches: List<Int> = emptyList(), // questionIndices where answers match
     val matchPercentage: Float = 0f
 )
+
+object MoodConstants {
+    val allMoods = listOf(
+        "Happy", "Sad", "Energetic", "Anxious", "Loved", 
+        "Exhausted", "Cozy", "Grumpy", "Creative", "Calm", 
+        "Excited", "Stressed", "Lonely"
+    )
+}

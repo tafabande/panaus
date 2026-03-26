@@ -14,7 +14,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import com.ourspace.app.util.GlobalErrorHandler
 
-class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRepository()) : ViewModel() {
+class FeaturesViewModel(
+    private val repository: FeaturesRepository,
+    private val musicRepository: com.ourspace.app.data.repository.MusicRepository
+) : ViewModel() {
     
     private val _notes = MutableStateFlow<List<Note>>(emptyList())
     val notes: StateFlow<List<Note>> = _notes.asStateFlow()
@@ -45,6 +48,9 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
 
     private val _partnerMood = MutableStateFlow<Mood?>(null)
     val partnerMood: StateFlow<Mood?> = _partnerMood.asStateFlow()
+
+    private val _songSuggestions = MutableStateFlow<List<com.ourspace.app.data.api.SongResult>>(emptyList())
+    val songSuggestions: StateFlow<List<com.ourspace.app.data.api.SongResult>> = _songSuggestions.asStateFlow()
 
     private var notesJob: Job? = null
     private var todosJob: Job? = null
@@ -120,12 +126,14 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
         }
     }
 
-    fun uploadMemory(coupleId: String, userId: String, localUri: android.net.Uri) {
+    fun uploadMemory(coupleId: String, userId: String, localUri: android.net.Uri, caption: String = "") {
         val tempId = java.util.UUID.randomUUID().toString()
         val optimisticMemory = Memory(
             id = tempId,
             userId = userId,
+            coupleId = coupleId,
             imageUrl = localUri.toString(),
+            caption = caption,
             timestamp = System.currentTimeMillis(),
             status = "SENDING"
         )
@@ -293,9 +301,35 @@ class FeaturesViewModel(private val repository: FeaturesRepository = FeaturesRep
                     coupleId = coupleId,
                     senderId = senderId,
                     type = type,
-                    timestamp = System.currentTimeMillis()
+                    timestamp = System.currentTimeMillis(),
+                    status = "unread"
                 )
                 repository.sendInteraction(interaction)
+            }
+        }
+    }
+
+    fun markInteractionAsRead(interactionId: String) {
+        viewModelScope.launch {
+            GlobalErrorHandler.runWithCatch {
+                repository.markInteractionAsRead(interactionId)
+            }
+        }
+    }
+
+    fun searchSongs(query: String) {
+        viewModelScope.launch {
+            if (query.length < 2) {
+                _songSuggestions.value = emptyList()
+                return@launch
+            }
+            try {
+                val results = musicRepository.searchSongs(query)
+                _songSuggestions.value = results
+            } catch (e: Exception) {
+                android.util.Log.e("FeaturesViewModel", "Song search failed for query: $query", e)
+                _songSuggestions.value = emptyList()
+                GlobalErrorHandler.recordException(e)
             }
         }
     }

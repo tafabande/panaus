@@ -23,6 +23,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.appcheck.FirebaseAppCheck
+import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.compose.runtime.mutableStateOf
@@ -51,6 +54,10 @@ import androidx.compose.runtime.remember
 import com.ourspace.app.util.GlobalErrorHandler
 import com.ourspace.app.util.UiFreezeDetector
 import com.ourspace.app.ui.theme.OurSpaceTheme
+import com.ourspace.app.data.repository.UserRepository
+import com.ourspace.app.data.repository.FeaturesRepository
+import com.ourspace.app.data.repository.AuthRepository
+import com.ourspace.app.ui.ViewModelFactory
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
@@ -63,17 +70,32 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         // Ensure the content doesn't fit system windows implicitly, which can cause black/white bars.
         // ComponentActivity 1.8.0+ enableEdgeToEdge already does this, but being explicit helps avoid "bezel" issues.
-        FirebaseApp.initializeApp(this)
+        try {
+            FirebaseApp.initializeApp(this)
+            val firebaseAppCheck = FirebaseAppCheck.getInstance()
+            firebaseAppCheck.installAppCheckProviderFactory(
+                if (BuildConfig.DEBUG) DebugAppCheckProviderFactory.getInstance()
+                else PlayIntegrityAppCheckProviderFactory.getInstance()
+            )
+            android.util.Log.d("MainActivity", "Firebase and App Check initialized successfully")
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Firebase initialization failed: ${e.message}")
+        }
 
         setContent {
-            val userViewModel: UserViewModel = viewModel()
+            val userRepository = remember { UserRepository() }
+            val featuresRepository = remember { FeaturesRepository() }
+            val authRepository = remember { AuthRepository() }
+            val factory = remember { ViewModelFactory(application, userRepository, featuresRepository, authRepository) }
+
+            val userViewModel: UserViewModel = viewModel(factory = factory)
             
             var isFirebaseReady by remember { mutableStateOf(true) }
             val userProfile by userViewModel.userProfile.collectAsState()
             val themePreference by userViewModel.themePreference.collectAsState()
             val hasSkippedPairing by userViewModel.hasSkippedPairing.collectAsState()
             
-            val featuresViewModel: FeaturesViewModel = viewModel()
+            val featuresViewModel: FeaturesViewModel = viewModel(factory = factory)
 
             LaunchedEffect(userProfile) {
                 if (userProfile?.coupleId != null) {
@@ -105,7 +127,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     containerColor = Color.Transparent, // Let the screens handle background
                     snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-                ) { innerPadding ->
+                ) { _ ->
                 NavHost(
                     navController = navController,
                     startDestination = startDest,
@@ -123,7 +145,8 @@ class MainActivity : ComponentActivity() {
                                 navController.navigate("main_flow") {
                                     popUpTo("login") { inclusive = true }
                                 }
-                            }
+                            },
+                            factory = factory
                         )
                     }
                     composable("register") {
@@ -133,11 +156,11 @@ class MainActivity : ComponentActivity() {
                                 navController.navigate("main_flow") {
                                     popUpTo("register") { inclusive = true }
                                 }
-                            }
+                            },
+                            factory = factory
                         )
                     }
                     composable("main_flow") {
-                        val snackbarHostState = remember { SnackbarHostState() }
                         var hasShownOfflineMessage by remember { mutableStateOf(false) }
 
                         LaunchedEffect(userProfile, hasShownOfflineMessage) {
@@ -158,7 +181,14 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                        if (userProfile?.coupleId == null && !hasSkippedPairing && userProfile != null) {
+                        if (userProfile != null && !(userProfile?.hasCompletedSetup ?: false)) {
+                            com.ourspace.app.ui.user.ProfileSetupScreen(
+                                userViewModel = userViewModel,
+                                onSetupComplete = {
+                                    // Local state update via VM should trigger recomposition
+                                }
+                            )
+                        } else if (userProfile?.coupleId == null && !hasSkippedPairing && userProfile != null) {
                             PairingScreen(
                                 onLogout = {
                                     navController.navigate("login") {

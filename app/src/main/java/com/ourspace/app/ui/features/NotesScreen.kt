@@ -28,10 +28,10 @@ import androidx.compose.ui.unit.sp
 import com.ourspace.app.data.model.Note
 import com.ourspace.app.data.model.UserProfile
 import com.ourspace.app.data.util.DateUtils
+import com.ourspace.app.ui.components.EmptyState
+import androidx.compose.material.icons.automirrored.filled.Notes
 
-private val primaryColor = Color(0xFF923f5f)
-private val surfaceColor = Color(0xFFf7f6f3)
-private val onSurfaceColor = Color(0xFF2e2f2d)
+// Colors moved to MaterialTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,23 +45,23 @@ fun NotesScreen(
     var showNoteDialog by remember { mutableStateOf<Note?>(null) }
 
     Scaffold(
-        containerColor = surfaceColor,
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             TopAppBar(
-                title = { Text("Shared Space", fontSize = 24.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif, color = primaryColor) },
+                title = { Text("Shared Space", fontSize = 24.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Serif, color = MaterialTheme.colorScheme.primary) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = onSurfaceColor)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = surfaceColor)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showNoteDialog = Note(coupleId = userProfile?.coupleId ?: "", senderId = userProfile?.userId ?: "") },
-                containerColor = primaryColor,
-                contentColor = Color.White,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = CircleShape
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Note")
@@ -91,7 +91,7 @@ fun NotesScreen(
                     ) {
                         Surface(
                             shape = CircleShape,
-                            color = primaryColor.copy(alpha = 0.1f),
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                             modifier = Modifier.size(48.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
@@ -104,12 +104,12 @@ fun NotesScreen(
                                 text = "Your partner is feeling ${partnerMood?.note?.ifBlank { "good" } ?: "good"}",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = onSurfaceColor
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
                                 text = "Updated ${DateUtils.formatRelativeTime(partnerMood?.timestamp ?: 0L)}",
                                 fontSize = 11.sp,
-                                color = Color.Gray
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -117,19 +117,27 @@ fun NotesScreen(
             }
 
             // Notes Grid
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                contentPadding = PaddingValues(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                items(notes, key = { it.id }) { note ->
-                    NoteCard(
-                        note = note,
-                        onClick = { showNoteDialog = note },
-                        onDelete = { viewModel.deleteNote(userProfile?.coupleId ?: "", note.id) }
-                    )
+            if (notes.isEmpty()) {
+                EmptyState(
+                    icon = Icons.AutoMirrored.Filled.Notes,
+                    title = "No Shared Notes Yet",
+                    description = "Capture your first shared memory, link, or digital sticky note here."
+                )
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    items(notes, key = { it.id }) { note ->
+                        NoteCard(
+                            note = note,
+                            onClick = { showNoteDialog = note },
+                            onDelete = { viewModel.deleteNote(userProfile?.coupleId ?: "", note.id) }
+                        )
+                    }
                 }
             }
         }
@@ -175,7 +183,7 @@ fun NoteCard(
                     text = note.title.ifBlank { "Untitled" },
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = onSurfaceColor,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
@@ -191,7 +199,7 @@ fun NoteCard(
             Text(
                 text = note.content,
                 fontSize = 13.sp,
-                color = onSurfaceColor.copy(alpha = 0.8f),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                 maxLines = 4,
                 overflow = TextOverflow.Ellipsis
             )
@@ -265,12 +273,12 @@ fun NoteEditDialog(
             TextButton(onClick = {
                 onSave(note.copy(title = title, content = content, color = selectedColor, timestamp = System.currentTimeMillis()))
             }) {
-                Text("Save", color = primaryColor)
+                Text("Save", color = MaterialTheme.colorScheme.primary)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = Color.Gray)
+                Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     )

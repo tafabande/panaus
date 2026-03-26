@@ -202,10 +202,13 @@ class FeaturesRepository {
         ref.set(finalInteraction, SetOptions.merge()).await()
     }
 
+    suspend fun markInteractionAsRead(interactionId: String) = withContext(Dispatchers.IO) {
+        db.collection("interactions").document(interactionId).update("status", "read").await()
+    }
+
     // --- Memories ---
     fun observeMemories(coupleId: String): Flow<List<Memory>> = callbackFlow {
-        val listener = db.collection("memories")
-            .whereEqualTo("coupleId", coupleId)
+        val listener = db.collection("couples").document(coupleId).collection("memories")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {

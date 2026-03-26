@@ -62,14 +62,14 @@ fun MoodScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color(0xFF64748B))
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         }
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFFAFAFA))
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -80,11 +80,11 @@ fun MoodScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
                     Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("How are you feeling right now?", fontWeight = FontWeight.Medium, color = Color(0xFF1E293B), modifier = Modifier.padding(bottom = 24.dp))
+                        Text("How are you feeling right now?", fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(bottom = 24.dp))
                         
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -114,8 +114,8 @@ fun MoodScreen(
                             shape = RoundedCornerShape(16.dp),
                             minLines = 3,
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFF43F5E),
-                                unfocusedBorderColor = Color(0xFFFFE4E6)
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
                             )
                         )
                         
@@ -142,7 +142,7 @@ fun MoodScreen(
                             enabled = selectedMood != null,
                             modifier = Modifier.fillMaxWidth().height(56.dp),
                             shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF43F5E))
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
                             Text("Log Mood", fontSize = 16.sp, fontWeight = FontWeight.Medium)
                         }
@@ -177,7 +177,7 @@ fun MoodScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                     ) {
                         Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -189,7 +189,7 @@ fun MoodScreen(
                                         text = if (mood.userId == userProfile?.userId) "You" else "Partner",
                                         fontWeight = FontWeight.Medium,
                                         fontSize = 14.sp,
-                                        color = Color(0xFF1E293B)
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
                                         text = DateUtils.formatDateTime(mood.timestamp),
@@ -203,8 +203,8 @@ fun MoodScreen(
                                         text = "\"${mood.note}\"",
                                         fontStyle = FontStyle.Italic,
                                         fontSize = 13.sp,
-                                        color = Color(0xFF64748B),
-                                        modifier = Modifier.padding(top = 4.dp).background(Color(0xFFFFF1F2), RoundedCornerShape(8.dp)).padding(8.dp).fillMaxWidth()
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(top = 4.dp).background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(8.dp)).padding(8.dp).fillMaxWidth()
                                     )
                                 }
                             }

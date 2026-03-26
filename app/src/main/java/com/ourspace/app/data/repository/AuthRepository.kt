@@ -7,6 +7,9 @@ import com.ourspace.app.data.util.DateUtils
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
+import android.util.Log
+
+private const val TAG = "AuthRepository"
 
 class AuthRepository {
     private val auth = FirebaseAuth.getInstance()
@@ -16,18 +19,25 @@ class AuthRepository {
 
     suspend fun login(email: String, pass: String): Result<Unit> = withContext(Dispatchers.IO) {
         return@withContext try {
+            Log.d(TAG, "Attempting login for: $email")
             auth.signInWithEmailAndPassword(email, pass).await()
+            Log.d(TAG, "Login successful for: $email")
             Result.success(Unit)
         } catch (e: Exception) {
+            Log.e(TAG, "Login failed for: $email", e)
             Result.failure(e)
         }
     }
 
     suspend fun register(name: String, email: String, pass: String): Result<Unit> = withContext(Dispatchers.IO) {
         return@withContext try {
+            Log.d(TAG, "Attempting registration for: $email")
             val result = auth.createUserWithEmailAndPassword(email, pass).await()
             val userId = result.user?.uid ?: throw Exception("User ID is null")
+            Log.d(TAG, "Auth user created: $userId. Generating partner code...")
+            
             val partnerCode = generateUniquePartnerCode()
+            Log.d(TAG, "Partner code generated: $partnerCode")
 
             val userProfile = UserProfile(
                 userId = userId,
@@ -39,9 +49,13 @@ class AuthRepository {
                 partnerCode = partnerCode
             )
 
+            Log.d(TAG, "Saving user profile to Firestore for UID: $userId...")
             db.collection("users").document(userId).set(userProfile).await()
+            Log.d(TAG, "User profile saved successfully to Firestore.")
+            
             Result.success(Unit)
         } catch (e: Exception) {
+            Log.e(TAG, "Registration failed for: $email", e)
             Result.failure(e)
         }
     }

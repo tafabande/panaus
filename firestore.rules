@@ -1,88 +1,142 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper to check if user belongs to the couple
+    
+    // --- Helpers ---
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Checks if the user belongs to the specified couple
     function isMemberOfCouple(coupleId) {
-      return request.auth != null && (
+      return isSignedIn() && (
         get(/databases/$(database)/documents/couples/$(coupleId)).data.user1Id == request.auth.uid ||
         get(/databases/$(database)/documents/couples/$(coupleId)).data.user2Id == request.auth.uid
       );
     }
-    
+
+    // Ensures the resource ownership hasn't changed (IDOR prevention)
+    function isImmutable(field) {
+      return !(field in request.resource.data) || request.resource.data[field] == resource.data[field];
+    }
+
     function isValidString(text, maxLen) {
       return text is string && text.size() > 0 && text.size() <= maxLen;
     }
 
+    // --- Rules ---
+
     match /users/{userId} {
-      allow read: if request.auth != null && (
-        request.auth.uid == userId ||
+      allow read: if isSignedIn() && (
+        isOwner(userId) ||
         resource.data.partnerId == request.auth.uid ||
         resource.data.isDiscoverable == true
       );
       
-      allow update: if request.auth != null && (
-        request.auth.uid == userId ||
-        (
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['partnerId', 'coupleId']) &&
-          resource.data.partnerId == null &&
-          resource.data.isDiscoverable == true
-        )
-      );
+      allow create: if isOwner(userId);
       
-      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if isOwner(userId) && isImmutable('userId');
+      
+      // Support for the pairing/discovery flow
+      allow update: if isSignedIn() && 
+        resource.data.isDiscoverable == true &&
+        resource.data.partnerId == null &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['partnerId', 'coupleId']);
     }
 
     match /couples/{coupleId} {
       allow read: if isMemberOfCouple(coupleId);
-      allow create: if request.auth != null;
-      allow update: if isMemberOfCouple(coupleId);
+      allow create: if isSignedIn() && (
+        request.resource.data.user1Id == request.auth.uid ||
+        request.resource.data.user2Id == request.auth.uid
+      );
+      allow update: if isMemberOfCouple(coupleId) && 
+        isImmutable('user1Id') && isImmutable('user2Id');
     }
 
-    match /moods/{moodId} {
-      allow read: if isMemberOfCouple(resource.data.coupleId);
-      allow create, update: if isMemberOfCouple(request.resource.data.coupleId) 
-        && request.resource.data.moodValue is number;
+    // Common pattern for shared features (Moods, Notes, Events, etc.)
+    function canAccessSharedItem() {
+      return isMemberOfCouple(resource.data.coupleId);
+    }
+    
+    function canModifySharedItem() {
+      return isMemberOfCouple(request.resource.data.coupleId) &&
+             (resource == null || isImmutable('coupleId')) &&
+             (request.resource.data.userId == request.auth.uid || 
+              request.resource.data.senderId == request.auth.uid ||
+              request.resource.data.fromUserId == request.auth.uid ||
+              request.resource.data.createdBy == request.auth.uid);
     }
 
-    match /notes/{noteId} {
-      allow read: if isMemberOfCouple(resource.data.coupleId);
-      allow create, update: if isMemberOfCouple(request.resource.data.coupleId) 
-        && isValidString(request.resource.data.content, 10000);
+    match /moods/{id} {
+      allow read: if canAccessSharedItem();
+      allow create: if canModifySharedItem() && request.resource.data.moodValue is number;
+      allow update: if canModifySharedItem() && isImmutable('userId');
     }
 
-    match /events/{eventId} {
-      allow read: if isMemberOfCouple(resource.data.coupleId);
-      allow create, update: if isMemberOfCouple(request.resource.data.coupleId) 
-        && isValidString(request.resource.data.title, 500);
+    match /notes/{id} {
+      allow read: if canAccessSharedItem();
+      allow create: if canModifySharedItem() && isValidString(request.resource.data.content, 10000);
+      allow update: if canModifySharedItem() && isImmutable('senderId');
     }
 
-    match /asks/{askId} {
-      allow read: if isMemberOfCouple(resource.data.coupleId);
-      allow create, update: if isMemberOfCouple(request.resource.data.coupleId) 
-        && isValidString(request.resource.data.requestText, 2000);
+    match /events/{id} {
+      allow read: if canAccessSharedItem();
+      allow create: if canModifySharedItem() && isValidString(request.resource.data.title, 500);
+      allow update: if canModifySharedItem() && isImmutable('createdBy');
     }
 
-    match /todos/{todoId} {
-      allow read: if isMemberOfCouple(resource.data.coupleId);
-      allow create, update: if isMemberOfCouple(request.resource.data.coupleId) 
-        && isValidString(request.resource.data.title, 500);
+    match /asks/{id} {
+      allow read: if canAccessSharedItem();
+      // Creator can create
+      allow create: if canModifySharedItem() && isValidString(request.resource.data.requestText, 2000);
+      // Recipient can update status/response
+      allow update: if canAccessSharedItem() && 
+        request.auth.uid == resource.data.toUserId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'responseText', 'respondedAt']);
+      // Creator can update content before response
+      allow update: if canModifySharedItem() && 
+        resource.data.status == 'pending' &&
+        isImmutable('fromUserId') && isImmutable('toUserId');
     }
 
-    match /updates/{updateId} {
-      allow read: if isMemberOfCouple(resource.data.coupleId);
-      allow create, update: if isMemberOfCouple(request.resource.data.coupleId);
+    match /todos/{id} {
+      allow read: if canAccessSharedItem();
+      allow create: if canModifySharedItem() && isValidString(request.resource.data.title, 500);
+      allow update: if canAccessSharedItem() && isMemberOfCouple(request.resource.data.coupleId);
     }
-    match /photos/{photoId} {
-      allow read: if isMemberOfCouple(resource.data.coupleId);
-      allow create, update: if isMemberOfCouple(request.resource.data.coupleId);
-    }
-    match /locationShares/{shareId} {
-      allow read: if isMemberOfCouple(resource.data.coupleId);
-      allow create, update: if isMemberOfCouple(request.resource.data.coupleId);
-    }
+
     match /interactions/{id} {
-      allow read: if isMemberOfCouple(resource.data.coupleId);
-      allow create: if isMemberOfCouple(request.resource.data.coupleId);
+      allow read: if canAccessSharedItem();
+      allow create: if canModifySharedItem();
+      // Recipient can mark as read
+      allow update: if canAccessSharedItem() && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+    }
+
+    match /photos/{id} {
+      allow read: if canAccessSharedItem();
+      allow create, update: if canModifySharedItem();
+    }
+
+    match /locationShares/{id} {
+      allow read: if canAccessSharedItem();
+      allow create, update: if canModifySharedItem();
+    }
+
+    match /updates/{id} {
+      allow read: if canAccessSharedItem();
+      allow create, update: if canModifySharedItem();
+    }
+    
+    match /memories/{id} {
+      allow read: if canAccessSharedItem();
+      allow create, update: if canModifySharedItem();
     }
   }
 }

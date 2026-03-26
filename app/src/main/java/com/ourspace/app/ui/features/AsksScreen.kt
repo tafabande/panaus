@@ -54,22 +54,22 @@ fun AsksScreen(
                 title = { Text("Requests & Asks", fontSize = 20.sp, fontWeight = FontWeight.Medium) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color(0xFF64748B))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
                 actions = {
                     TextButton(onClick = { showForm = !showForm }) {
-                        Text(if (showForm) "Cancel" else "New Ask", color = Color(0xFFF43F5E), fontWeight = FontWeight.Medium)
+                        Text(if (showForm) "Cancel" else "New Ask", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         }
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFFAFAFA))
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -81,11 +81,11 @@ fun AsksScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                     ) {
                         Column(modifier = Modifier.padding(20.dp)) {
-                            Text("TYPE OF REQUEST", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF94A3B8), letterSpacing = 1.sp)
+                            Text("TYPE OF REQUEST", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.outline, letterSpacing = 1.sp)
                             Spacer(modifier = Modifier.height(12.dp))
                             
                             FlowRow(
@@ -98,12 +98,12 @@ fun AsksScreen(
                                     Box(
                                         modifier = Modifier
                                             .background(
-                                                color = if (isSelected) Color(0xFFF43F5E) else Color.White,
+                                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
                                                 shape = RoundedCornerShape(12.dp)
                                             )
                                             .border(
                                                 width = 1.dp,
-                                                color = if (isSelected) Color(0xFFF43F5E) else Color(0xFFFFE4E6),
+                                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
                                                 shape = RoundedCornerShape(12.dp)
                                             )
                                             .clickable { requestType = type }
@@ -112,7 +112,7 @@ fun AsksScreen(
                                         Text(
                                             text = type,
                                             fontSize = 14.sp,
-                                            color = if (isSelected) Color.White else Color(0xFF64748B)
+                                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                 }
@@ -120,7 +120,7 @@ fun AsksScreen(
 
                             if (requestType == "Custom") {
                                 Spacer(modifier = Modifier.height(16.dp))
-                                Text("CUSTOM MESSAGE", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF94A3B8), letterSpacing = 1.sp)
+                                Text("CUSTOM MESSAGE", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.outline, letterSpacing = 1.sp)
                                 Spacer(modifier = Modifier.height(8.dp))
                                 OutlinedTextField(
                                     value = requestText,
@@ -129,8 +129,8 @@ fun AsksScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = Color(0xFFF43F5E),
-                                        unfocusedBorderColor = Color(0xFFFFE4E6)
+                                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
                                     )
                                 )
                             }
@@ -159,7 +159,7 @@ fun AsksScreen(
                                 enabled = !isCustomEmpty,
                                 modifier = Modifier.fillMaxWidth().height(50.dp),
                                 shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF43F5E))
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                             ) {
                                 Text("Send Request", fontSize = 14.sp, fontWeight = FontWeight.Medium)
                             }
@@ -174,9 +174,9 @@ fun AsksScreen(
                         modifier = Modifier.fillMaxWidth().padding(top = 40.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "No requests", tint = Color(0xFFFFE4E6), modifier = Modifier.size(48.dp))
+                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "No requests", tint = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.size(48.dp))
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("No requests currently.", color = Color(0xFF94A3B8), fontSize = 14.sp)
+                        Text("No requests currently.", color = MaterialTheme.colorScheme.outline, fontSize = 14.sp)
                     }
                 }
             }
@@ -202,7 +202,7 @@ fun AsksScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -211,7 +211,7 @@ fun AsksScreen(
                                 text = if (amIReceiver) "PARTNER ASKED YOU" else "YOU ASKED PARTNER",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFFFB7185),
+                                color = MaterialTheme.colorScheme.primary,
                                 letterSpacing = 1.sp
                             )
                             if (!isPending) {
@@ -236,13 +236,13 @@ fun AsksScreen(
                         }
                         
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = "\"${ask.requestText}\"", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = Color(0xFF1E293B))
+                        Text(text = "\"${ask.requestText}\"", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = DateUtils.formatDateTime(ask.timestamp), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFF94A3B8), letterSpacing = 1.sp)
+                        Text(text = DateUtils.formatDateTime(ask.timestamp), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.outline, letterSpacing = 1.sp)
 
                         if (isPending) {
                             Spacer(modifier = Modifier.height(16.dp))
-                            HorizontalDivider(color = Color(0xFFF1F5F9))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                             Spacer(modifier = Modifier.height(12.dp))
                             
                             if (amIReceiver) {
@@ -256,8 +256,8 @@ fun AsksScreen(
                                     text = "Waiting for response...",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = Color(0xFF64748B),
-                                    modifier = Modifier.background(Color(0xFFF8FAFC), RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
                             }
                         }

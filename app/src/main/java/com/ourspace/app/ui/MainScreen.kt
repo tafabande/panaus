@@ -52,19 +52,10 @@ fun MainScreen(
     }
     
     Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { rootNavController.navigate("moods") },
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.padding(bottom = 80.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Log Mood")
-            }
-        },
         bottomBar = {
             NavigationBar(
                 modifier = Modifier
+                    .navigationBarsPadding()
                     .padding(horizontal = 16.dp, vertical = 16.dp)
                     .clip(RoundedCornerShape(32.dp))
                     .shadow(12.dp, RoundedCornerShape(32.dp), spotColor = MaterialTheme.colorScheme.onSurface),
@@ -95,8 +86,14 @@ fun MainScreen(
                 }
             }
         }
-    ) { _ ->
-        NavHost(navController = navController, startDestination = BottomNavItem.Home.route, modifier = Modifier.fillMaxSize()) {
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = BottomNavItem.Home.route,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
             composable(BottomNavItem.Home.route) {
                 DashboardScreen(
                     onLogout = {

@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
+import com.ourspace.app.ui.ViewModelFactory
 import com.ourspace.app.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,7 +28,8 @@ import com.ourspace.app.R
 fun LoginScreen(
     onNavigateToRegister: () -> Unit,
     onLoginSuccess: () -> Unit,
-    viewModel: AuthViewModel = viewModel()
+    factory: ViewModelFactory,
+    viewModel: AuthViewModel = viewModel(factory = factory)
 ) {
     val context = LocalContext.current
     val sharedPrefs = remember { context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE) }

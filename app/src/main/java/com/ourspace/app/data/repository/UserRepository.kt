@@ -9,24 +9,34 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
+import android.util.Log
+
+private const val TAG = "UserRepository"
 
 class UserRepository {
     private val db = FirebaseFirestore.getInstance()
 
     fun observeUser(userId: String): Flow<UserProfile?> = callbackFlow {
+        Log.d(TAG, "Starting observeUser for: $userId")
         val listener = db.collection("users").document(userId).addSnapshotListener { snapshot, error ->
             if (error != null) {
+                Log.e(TAG, "Error observing user $userId", error)
                 close(error)
                 return@addSnapshotListener
             }
             if (snapshot != null && snapshot.exists()) {
                 val user = snapshot.toObject(UserProfile::class.java)
+                Log.d(TAG, "User profile updated for $userId: ${user?.name}")
                 trySend(user)
             } else {
+                Log.d(TAG, "User profile for $userId does not exist or snapshot is null")
                 trySend(null)
             }
         }
-        awaitClose { listener.remove() }
+        awaitClose { 
+            Log.d(TAG, "Cleaning up observeUser listener for: $userId")
+            listener.remove() 
+        }
     }
 
     suspend fun pairWithPartner(currentUserId: String, partnerCode: String): Result<Unit> = withContext(Dispatchers.IO) {

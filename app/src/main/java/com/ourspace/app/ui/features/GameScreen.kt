@@ -385,14 +385,14 @@ fun ComparisonResultView(result: GameResult, questionIndex: Int) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(if (isMatch) Color(0xFFE8F5E9) else Color(0xFFFFEBEE))
+            .background(if (isMatch) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f) else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f))
             .padding(16.dp)
     ) {
         Text(
             if (isMatch) "✨ It's a match!" else "⌛ Different vibes",
             fontWeight = FontWeight.Bold,
             fontSize = 14.sp,
-            color = if (isMatch) Color(0xFF2E7D32) else Color(0xFFC62828)
+            color = if (isMatch) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error
         )
         Spacer(modifier = Modifier.height(8.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
