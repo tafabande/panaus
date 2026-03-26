@@ -24,6 +24,10 @@
 
         </activity>
 
+        <meta-data
+            android:name="com.google.android.gms.phenotype.registration.xml:com.google.android.gms.measurement"
+            android:resource="@xml/phenotype_registration" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
