@@ -182,12 +182,15 @@ fun DashboardScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         val interactionTypes = listOf(
-                            Triple("poke", "Poke 👉", AuraColors.CreamyPink),
-                            Triple("hug", "Hug 🤗", AuraColors.SoftRose),
-                            Triple("kiss", "Kiss 💋", AuraColors.DeepMauve)
+                            Triple("poke", "Poke 👉", Color(0xFFFD36A4)),
+                            Triple("hug", "Hug 🤗", Color(0xFFE91E63)),
+                            Triple("kiss", "Kiss 💋", Color(0xFF8B00FF))
                         )
                         
-                        interactionTypes.forEach { (type, label, color) ->
+                        interactionTypes.forEach { interaction ->
+                            val type = interaction.first
+                            val label = interaction.second
+                            
                             TextButton(
                                 onClick = {
                                     userProfile?.let { u ->
