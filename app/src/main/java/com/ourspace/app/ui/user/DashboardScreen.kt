@@ -40,7 +40,8 @@ fun DashboardScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
+            .background(MaterialTheme.colorScheme.background)
+            .systemBarsPadding()
             .padding(24.dp)
             .verticalScroll(scrollState)
     ) {
@@ -66,11 +67,16 @@ fun DashboardScreen(
                     fontFamily = FontFamily.Serif // Simulating Noto Serif
                 )
                 Text(
-                    text = "Welcome back, ${userProfile?.name ?: "darling"}",
+                    text = if (userProfile == null) "Connecting..." else "Welcome back, ${userProfile?.name ?: "darling"}",
                     fontSize = 16.sp,
                     color = MaterialTheme.colorScheme.onSurface,
                     fontFamily = FontFamily.SansSerif
                 )
+                if (userProfile == null) {
+                    TextButton(onClick = { /* UserViewModel already observes, but we could trigger a refresh */ }) {
+                        Text("Retry", fontSize = 12.sp)
+                    }
+                }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onNavigateToAnalytics) {

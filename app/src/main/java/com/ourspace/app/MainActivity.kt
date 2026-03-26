@@ -14,6 +14,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -60,6 +61,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         freezeDetector.start()
         enableEdgeToEdge()
+        // Ensure the content doesn't fit system windows implicitly, which can cause black/white bars.
+        // ComponentActivity 1.8.0+ enableEdgeToEdge already does this, but being explicit helps avoid "bezel" issues.
         FirebaseApp.initializeApp(this)
 
         setContent {
@@ -99,12 +102,13 @@ class MainActivity : ComponentActivity() {
             OurSpaceTheme {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
+                    containerColor = Color.Transparent, // Let the screens handle background
                     snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
                 ) { innerPadding ->
                 NavHost(
                     navController = navController,
                     startDestination = startDest,
-                    modifier = Modifier.padding(innerPadding)
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     composable("loading") {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -137,7 +141,7 @@ class MainActivity : ComponentActivity() {
 
                         LaunchedEffect(userProfile, hasShownOfflineMessage) {
                             if (userProfile == null && !hasShownOfflineMessage) {
-                                delay(60000) // 1-minute failure handler
+                                delay(15000) // 15-second failure handler (reduced from 60s)
                                 if (userProfile == null) {
                                     val result = snackbarHostState.showSnackbar(
                                         message = "Data load is taking longer than expected. Using offline mode.",
