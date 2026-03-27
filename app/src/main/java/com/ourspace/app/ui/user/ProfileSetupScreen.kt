@@ -157,13 +157,6 @@ fun ProfileSetupScreen(
                 label = "Birthday (Optional)"
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            AuraDatePickerField(
-                value = anniversary,
-                onValueChange = { anniversary = it },
-                label = "Anniversary (Optional)"
-            )
 
             Spacer(modifier = Modifier.height(16.dp))
 

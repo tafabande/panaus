@@ -37,6 +37,7 @@ fun MainScreen(
     featuresViewModel: FeaturesViewModel
 ) {
     val navController = rememberNavController()
+    val snackbarHostState = remember { SnackbarHostState() }
     
     val items = listOf(
         BottomNavItem.Home,
@@ -47,12 +48,23 @@ fun MainScreen(
         BottomNavItem.Profile
     )
 
+    // Global Error Listener
+    LaunchedEffect(Unit) {
+        com.ourspace.app.util.GlobalErrorHandler.errorEvents.collect { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Short
+            )
+        }
+    }
+
     // Start data observation when profile is loaded
     LaunchedEffect(userProfile) {
         userProfile?.let { featuresViewModel.startObserving(it) }
     }
     
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             NavigationBar(
                 modifier = Modifier
@@ -132,20 +144,18 @@ fun MainScreen(
                 )
             }
             composable(BottomNavItem.Timeline.route) {
-                TimelineScreen(
+                com.ourspace.app.ui.features.TimelineScreen(
                     viewModel = featuresViewModel,
                     onAddEvent = { navController.navigate("edit_relationship") },
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
             composable("edit_relationship") {
-                userProfile?.coupleId?.let { coupleId ->
-                    EditRelationshipScreen(
-                        coupleId = coupleId,
-                        viewModel = featuresViewModel,
-                        onNavigateBack = { navController.popBackStack() }
-                    )
-                }
+                EditRelationshipScreen(
+                    userProfile = userProfile,
+                    viewModel = featuresViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
             composable("memories") {
                 MemoriesScreen(

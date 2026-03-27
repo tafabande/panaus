@@ -27,7 +27,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ourspace.app.data.model.TimelineEvent
+import com.ourspace.app.data.model.RelationshipEvent
 import com.ourspace.app.data.util.DateUtils
 import com.ourspace.app.ui.components.AuraDatePickerField
 
@@ -106,7 +106,7 @@ fun TimelineScreen(
 }
 
 @Composable
-fun TimelineItem(event: TimelineEvent) {
+fun TimelineItem(event: RelationshipEvent) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -170,7 +170,7 @@ fun TimelineItem(event: TimelineEvent) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = event.name,
+                        text = event.title,
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         color = MaterialTheme.colorScheme.onSurface
@@ -190,7 +190,7 @@ fun TimelineItem(event: TimelineEvent) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                if (event.type == "SYSTEM") {
+                if (event.category == "SYSTEM") {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Added automatically from profile",

@@ -76,6 +76,9 @@ class FeaturesViewModel(
     private val _songSuggestions = MutableStateFlow<List<com.ourspace.app.data.api.SongResult>>(emptyList())
     val songSuggestions: StateFlow<List<com.ourspace.app.data.api.SongResult>> = _songSuggestions.asStateFlow()
 
+    private val _isSavingProfile = MutableStateFlow(false)
+    val isSavingProfile: StateFlow<Boolean> = _isSavingProfile.asStateFlow()
+
     private var notesJob: Job? = null
     private var todosJob: Job? = null
     private var eventsJob: Job? = null
@@ -89,12 +92,37 @@ class FeaturesViewModel(
     private val lastInteractionTimes = mutableMapOf<String, Long>()
     private val INTERACTION_COOLDOWN = 3000L // 3 seconds
 
+    fun stopObserving() {
+        notesJob?.cancel()
+        todosJob?.cancel()
+        eventsJob?.cancel()
+        moodsJob?.cancel()
+        asksJob?.cancel()
+        interactionsJob?.cancel()
+        memoriesJob?.cancel()
+        partnerMoodJob?.cancel()
+
+        _notes.value = emptyList()
+        _todos.value = emptyList()
+        _events.value = emptyList()
+        _moods.value = emptyList()
+        _asks.value = emptyList()
+        _interactions.value = emptyList()
+        _memories.value = emptyList()
+        _relationshipEvents.value = emptyList()
+    }
+
 
 
     // Load Data based on UserProfile
     fun startObserving(userProfile: UserProfile) {
-        val coupleId = userProfile.coupleId ?: return
-        Log.d("FeaturesViewModel", "Starting observation for couple: $coupleId")
+        val coupleId = userProfile.coupleId
+        if (coupleId.isNullOrBlank()) {
+            Log.d("FeaturesViewModel", "TRACE: startObserving called but coupleId is NULL or BLANK. Clearing observations.")
+            stopObserving()
+            return
+        }
+        Log.d("FeaturesViewModel", "TRACE: Starting observation for couple: $coupleId")
 
         notesJob?.cancel()
         notesJob = viewModelScope.launch {
@@ -157,6 +185,7 @@ class FeaturesViewModel(
 
 
     fun uploadMemory(coupleId: String, userId: String, localUri: android.net.Uri, caption: String = "") {
+        Log.d("FeaturesViewModel", "TRACE: uploadMemory requested. coupleId: '$coupleId', userId: '$userId'")
         val tempId = java.util.UUID.randomUUID().toString()
         val optimisticMemory = Memory(
             id = tempId,
@@ -207,10 +236,12 @@ class FeaturesViewModel(
     }
 
     fun saveNote(coupleId: String, note: Note) {
+        Log.d("FeaturesViewModel", "TRACE: saveNote requested. coupleId: '$coupleId', noteId: '${note.id}'")
         viewModelScope.launch {
             try {
                 repository.saveNote(coupleId, note)
             } catch (e: Exception) {
+                Log.e("FeaturesViewModel", "TRACE: saveNote FAILED", e)
                 GlobalErrorHandler.recordException(e)
             }
         }
@@ -263,6 +294,7 @@ class FeaturesViewModel(
     }
 
     fun addEvent(coupleId: String, creatorId: String, title: String, date: String, time: String, category: String) {
+        Log.d("FeaturesViewModel", "TRACE: addEvent requested. coupleId: '$coupleId', title: '$title'")
         if (title.isBlank() || date.isBlank()) return
         viewModelScope.launch {
             GlobalErrorHandler.runWithCatch {
@@ -325,18 +357,23 @@ class FeaturesViewModel(
     }
 
     fun sendInteraction(coupleId: String, senderId: String, type: String) {
+        if (coupleId.isBlank()) {
+            Log.w("FeaturesViewModel", "TRACE: sendInteraction ABORTED. coupleId is BLANK!")
+            return
+        }
         val currentTime = System.currentTimeMillis()
         val lastTime = lastInteractionTimes[type] ?: 0L
         
         if (currentTime - lastTime < INTERACTION_COOLDOWN) {
-            Log.d("FeaturesViewModel", "Throttling interaction: $type")
+            Log.d("FeaturesViewModel", "TRACE: Throttling interaction: $type (cooldown active)")
             return
         }
         
         lastInteractionTimes[type] = currentTime
+        Log.d("FeaturesViewModel", "Initiating interaction: $type for couple: $coupleId from: $senderId")
         
         viewModelScope.launch {
-            GlobalErrorHandler.runWithCatch {
+            try {
                 val interaction = Interaction(
                     coupleId = coupleId,
                     senderId = senderId,
@@ -345,6 +382,11 @@ class FeaturesViewModel(
                     status = "unread"
                 )
                 repository.sendInteraction(interaction)
+                Log.d("FeaturesViewModel", "Successfully sent interaction: $type")
+                GlobalErrorHandler.showMessage("${type.replaceFirstChar { it.uppercase() }} sent! ❤️")
+            } catch (e: Exception) {
+                Log.e("FeaturesViewModel", "Failed to send interaction: $type", e)
+                GlobalErrorHandler.recordException(e)
             }
         }
     }
@@ -359,21 +401,19 @@ class FeaturesViewModel(
 
     fun saveRelationshipEvent(event: RelationshipEvent) {
         viewModelScope.launch {
-            try {
-                repository.saveRelationshipEvent(event)
-            } catch (e: Exception) {
-                GlobalErrorHandler.recordException(e)
-            }
+            _isSavingProfile.value = true
+            val result = repository.saveRelationshipEvent(event)
+            result.onFailure { GlobalErrorHandler.recordException(it) }
+            _isSavingProfile.value = false
         }
     }
 
     fun deleteRelationshipEvent(coupleId: String, eventId: String) {
         viewModelScope.launch {
-            try {
-                repository.deleteRelationshipEvent(coupleId, eventId)
-            } catch (e: Exception) {
-                GlobalErrorHandler.recordException(e)
-            }
+            _isSavingProfile.value = true
+            val result = repository.deleteRelationshipEvent(coupleId, eventId)
+            result.onFailure { GlobalErrorHandler.recordException(it) }
+            _isSavingProfile.value = false
         }
     }
 

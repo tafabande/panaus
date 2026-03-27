@@ -57,8 +57,19 @@ fun CalendarScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showForm = !showForm }) {
-                        Icon(Icons.Filled.Add, contentDescription = "Add Event", tint = MaterialTheme.colorScheme.primary)
+                    val isUnlinked = userProfile?.coupleId.isNullOrBlank()
+                    IconButton(
+                        onClick = { 
+                            if (!isUnlinked) {
+                                showForm = !showForm 
+                            }
+                        }
+                    ) {
+                        Icon(
+                            Icons.Filled.Add, 
+                            contentDescription = "Add Event", 
+                            tint = if (isUnlinked) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f) else MaterialTheme.colorScheme.primary
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -169,12 +180,16 @@ fun CalendarScreen(
             }
 
             val filteredEvents = events.filter { it.date == selectedDate }
+            val isUnlinked = userProfile?.coupleId.isNullOrBlank()
+            
             if (filteredEvents.isEmpty() && !showForm) {
                 item {
                     EmptyState(
                         icon = Icons.AutoMirrored.Filled.EventNote,
-                        title = "Quiet Day",
-                        description = "No plans for this date yet. Why not schedule a surprise?"
+                        title = if (isUnlinked) "Shared Calendar" else "Quiet Day",
+                        description = if (isUnlinked)
+                            "Link with a partner to start planning your future together."
+                        else "No plans for this date yet. Why not schedule a surprise?"
                     )
                 }
             } else {

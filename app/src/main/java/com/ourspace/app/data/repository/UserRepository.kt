@@ -1,6 +1,9 @@
 package com.ourspace.app.data.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.Query
+import com.ourspace.app.data.model.RelationshipEvent
 import com.ourspace.app.data.model.UserProfile
 import com.ourspace.app.data.util.DateUtils
 import kotlinx.coroutines.channels.awaitClose
@@ -71,7 +74,7 @@ class UserRepository {
             val coupleData = hashMapOf(
                 "coupleId" to coupleId,
                 "user1Id" to currentUserId,
-                "user2Id" to partnerCode,
+                "user2Id" to partnerId,
                 "createdAt" to DateUtils.getCurrentIsoTime()
             )
 
@@ -79,7 +82,7 @@ class UserRepository {
             db.collection("couples").document(coupleId).set(coupleData).await()
             
             db.collection("users").document(currentUserId).update(
-                "partnerId", partnerCode,
+                "partnerId", partnerId,
                 "coupleId", coupleId
             ).await()
 
@@ -97,9 +100,9 @@ class UserRepository {
         }
     }
 
-    suspend fun updateDiscoverability(userId: String, isDiscoverable: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun updateDiscoverable(userId: String, discoverable: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
         return@withContext try {
-            db.collection("users").document(userId).update("isDiscoverable", isDiscoverable).await()
+            db.collection("users").document(userId).update("discoverable", discoverable).await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -124,24 +127,25 @@ class UserRepository {
         }
     }
 
+    private val mediaRepository = MediaRepository()
+
     suspend fun uploadProfilePicture(userId: String, localUri: Uri): Result<String> = withContext(Dispatchers.IO) {
         return@withContext try {
-            val storage = FirebaseStorage.getInstance()
-            val fileName = "profiles/$userId/pfp_${System.currentTimeMillis()}.jpg"
-            val fileRef = storage.reference.child(fileName)
+            val fileName = "pfp_${System.currentTimeMillis()}.jpg"
+            val folder = "profiles/$userId"
             
-            Log.d("UserRepository", "Uploading PFP to: $fileName from Uri: $localUri")
+            // Upload using MediaRepository
+            val uploadResult = mediaRepository.uploadMedia(folder, fileName, localUri)
+            if (uploadResult.isFailure) return@withContext Result.failure(uploadResult.exceptionOrNull()!!)
             
-            // Upload
-            fileRef.putFile(localUri).await()
-            val downloadUrl = fileRef.downloadUrl.await().toString()
+            val downloadUrl = uploadResult.getOrNull()!!
             
             // Update Firestore
             db.collection("users").document(userId).update("avatarUrl", downloadUrl).await()
             
             Result.success(downloadUrl)
         } catch (e: Exception) {
-            Log.e("UserRepository", "Failed to upload profile picture for $userId", e)
+            Log.e(TAG, "Failed to update user profile with new picture for $userId", e)
             Result.failure(e)
         }
     }
@@ -257,7 +261,7 @@ class UserRepository {
             if (query.length < 3) return@withContext Result.success(emptyList())
 
             val results = db.collection("users")
-                .whereEqualTo("isDiscoverable", true)
+                .whereEqualTo("discoverable", true)
                 .get()
                 .await()
 
@@ -274,25 +278,55 @@ class UserRepository {
         }
     }
 
-    suspend fun addTimelineEvent(event: com.ourspace.app.data.model.TimelineEvent): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun sendPairingRequestById(fromUserId: String, partnerId: String): Result<Unit> = withContext(Dispatchers.IO) {
         return@withContext try {
-            val docRef = db.collection("timeline").document()
-            val eventWithId = event.copy(id = docRef.id)
-            docRef.set(eventWithId).await()
+            val requestId = listOf(fromUserId, partnerId).sorted().joinToString("_")
+            val requestData = hashMapOf(
+                "fromId" to fromUserId,
+                "toId" to partnerId,
+                "status" to "PENDING",
+                "createdAt" to DateUtils.getCurrentIsoTime()
+            )
+            db.collection("pairingRequests").document(requestId).set(requestData).await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    fun observeTimelineEvents(coupleId: String): Flow<List<com.ourspace.app.data.model.TimelineEvent>> = callbackFlow {
-        val listener = db.collection("timeline")
-            .whereEqualTo("coupleId", coupleId)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
-                val events = snapshot?.toObjects(com.ourspace.app.data.model.TimelineEvent::class.java) ?: emptyList()
-                // Sort by date manually if we don't have indexes yet
-                trySend(events.sortedByDescending { it.date })
+    suspend fun saveRelationshipEvent(event: RelationshipEvent): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val docRef = if (event.id.isEmpty()) {
+                db.collection("couples").document(event.coupleId).collection("relationship_history").document()
+            } else {
+                db.collection("couples").document(event.coupleId).collection("relationship_history").document(event.id)
+            }
+            val finalEvent = event.copy(id = docRef.id)
+            docRef.set(finalEvent, SetOptions.merge()).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    fun getRelationshipEvents(coupleId: String): Flow<List<RelationshipEvent>> = callbackFlow {
+        if (coupleId.isEmpty()) {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+        val listener = db.collection("couples").document(coupleId).collection("relationship_history")
+            .orderBy("date", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.e("UserRepository", "Error observing relationship events", e)
+                    close(e)
+                    return@addSnapshotListener
+                }
+                val events = snapshot?.documents?.mapNotNull { doc ->
+                    doc.toObject(RelationshipEvent::class.java)?.apply { id = doc.id }
+                } ?: emptyList()
+                trySend(events)
             }
         awaitClose { listener.remove() }
     }

@@ -13,9 +13,11 @@ data class UserProfile(
     val partnerId: String? = null,
     val coupleId: String? = null,
     val createdAt: String = "",
-    @get:PropertyName("isDiscoverable")
-    @set:PropertyName("isDiscoverable")
-    var isDiscoverable: Boolean = false,
+    
+    @get:PropertyName("discoverable")
+    @set:PropertyName("discoverable")
+    var discoverable: Boolean = false,
+
     @get:PropertyName("isSetupComplete")
     @set:PropertyName("isSetupComplete")
     var isSetupComplete: Boolean = false,

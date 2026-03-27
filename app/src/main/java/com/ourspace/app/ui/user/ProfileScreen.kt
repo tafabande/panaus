@@ -242,8 +242,8 @@ fun ProfileScreen(
                 }
             }
 
-            // Relationship Status / Pairing
-            SectionHeader("Connection")
+            // Relationship Info / Pairing
+            SectionHeader("Relationship Info")
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -253,6 +253,22 @@ fun ProfileScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f))
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
+                    if (isEditMode) {
+                        AuraDatePickerField(
+                            value = anniversary,
+                            onValueChange = { anniversary = it },
+                            label = "Anniversary Date",
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                        HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp), color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+                    } else if (anniversary.isNotEmpty()) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 16.dp)) {
+                            Icon(Icons.Default.Event, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text("Anniversary: $anniversary", fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                        }
+                    }
+
                     if (userProfile?.partnerId != null) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Favorite, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
@@ -350,8 +366,8 @@ fun ProfileScreen(
                             Text("Let others find you and your partner by your Aura codes.", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
                         }
                         Switch(
-                            checked = userProfile?.isDiscoverable == true,
-                            onCheckedChange = { userViewModel.setDiscoverability(it) },
+                            checked = userProfile?.discoverable == true,
+                            onCheckedChange = { userViewModel.updateDiscoverable(it) },
                             colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.primary)
                         )
                     }
@@ -379,15 +395,8 @@ fun ProfileScreen(
                             label = "Birthday",
                             modifier = Modifier.padding(vertical = 8.dp)
                         )
-                        AuraDatePickerField(
-                            value = anniversary,
-                            onValueChange = { anniversary = it },
-                            label = "Anniversary",
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
                     } else {
                         ProfileTextField("Birthday", birthday, false) { }
-                        ProfileTextField("Anniversary", anniversary, false) { }
                     }
 
                     ProfileTextField("Food Preferences", foodPrefs, isEditMode) { foodPrefs = it }

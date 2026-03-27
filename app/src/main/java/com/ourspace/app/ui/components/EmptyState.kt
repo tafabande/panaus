@@ -1,9 +1,8 @@
 package com.ourspace.app.ui.components
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,7 +17,9 @@ fun EmptyState(
     icon: ImageVector,
     title: String,
     description: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null
 ) {
     Column(
         modifier = modifier
@@ -49,5 +50,16 @@ fun EmptyState(
             textAlign = TextAlign.Center,
             lineHeight = 20.sp
         )
+        
+        if (onAction != null && actionLabel != null) {
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(
+                onClick = onAction,
+                shape = RoundedCornerShape(12.dp),
+                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+            ) {
+                Text(actionLabel, fontWeight = FontWeight.Bold)
+            }
+        }
     }
 }

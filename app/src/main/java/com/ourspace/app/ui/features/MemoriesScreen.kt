@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -98,7 +99,18 @@ fun MemoriesScreen(
             EmptyState(
                 icon = Icons.Default.PhotoLibrary,
                 title = "No Memories Yet",
-                description = "Tap the + button to start building your shared album.",
+                description = if (userProfile?.coupleId.isNullOrBlank()) 
+                    "You need to link with a partner before building your shared album." 
+                    else "Tap below or the + button to start building your shared album.",
+                actionLabel = if (userProfile?.coupleId.isNullOrBlank()) null else "Add First Memory",
+                onAction = if (userProfile?.coupleId.isNullOrBlank()) null else {
+                    {
+                        Log.d("MemoriesScreen", "Launching photo picker from EmptyState")
+                        photoPicker.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    }
+                },
                 modifier = Modifier.padding(top = 40.dp)
             )
         } else {

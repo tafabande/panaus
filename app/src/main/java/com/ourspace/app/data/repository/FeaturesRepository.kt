@@ -34,7 +34,11 @@ class FeaturesRepository {
             db.collection("couples").document(coupleId).collection("notes").document(note.id)
         }
         val finalNote = if (note.id.isEmpty()) note.copy(id = ref.id) else note
-        ref.set(finalNote, SetOptions.merge()).await()
+        try {
+            ref.set(finalNote, SetOptions.merge()).await()
+        } catch (e: Exception) {
+            throw e
+        }
     }
 
     suspend fun deleteNote(coupleId: String, noteId: String) {
@@ -119,9 +123,13 @@ class FeaturesRepository {
     }
 
     suspend fun addEvent(event: CalendarEvent) = withContext(Dispatchers.IO) {
-        val ref = db.collection("events").document()
-        val finalEvent = event.copy().apply { id = ref.id }
-        ref.set(finalEvent, SetOptions.merge()).await()
+        try {
+            val ref = db.collection("events").document()
+            val finalEvent = event.copy().apply { id = ref.id }
+            ref.set(finalEvent, SetOptions.merge()).await()
+        } catch (e: Exception) {
+            throw e
+        }
     }
 
     // --- Moods ---
@@ -228,27 +236,29 @@ class FeaturesRepository {
         awaitClose { listener.remove() }
     }
 
+    private val mediaRepository = MediaRepository()
+
     suspend fun uploadMemory(coupleId: String, memory: Memory, localUri: android.net.Uri) = withContext(Dispatchers.IO) {
         try {
-            val storage = com.google.firebase.storage.FirebaseStorage.getInstance()
-            // Sanitize coupleId and path
-            val folder = if (coupleId.isNotBlank()) coupleId else memory.userId
-            val fileName = "memories/$folder/${System.currentTimeMillis()}.jpg"
-            val fileRef = storage.reference.child(fileName)
+            val folder = if (coupleId.isNotBlank()) "memories/$coupleId" else "memories/${memory.userId}"
+            val fileName = "${System.currentTimeMillis()}.jpg"
             
-            // Upload to Storage
-            fileRef.putFile(localUri).await()
-            val downloadUrl = fileRef.downloadUrl.await().toString()
+            // Upload using MediaRepository
+            val uploadResult = mediaRepository.uploadMedia(folder, fileName, localUri)
+            if (uploadResult.isFailure) {
+                throw uploadResult.exceptionOrNull()!!
+            }
+            
+            val downloadUrl = uploadResult.getOrNull()!!
             
             // Save to Firestore
             val finalMemory = memory.copy(imageUrl = downloadUrl, status = "UPLOADED")
-            val targetCoupleId = if (coupleId.isNotBlank()) coupleId else "unknown" 
+            val targetCoupleId = if (coupleId.isNotBlank()) coupleId else "unknown"
             
             db.collection("couples").document(targetCoupleId)
                 .collection("memories").document(finalMemory.id)
                 .set(finalMemory, SetOptions.merge()).await()
         } catch (e: Exception) {
-            Log.e("FeaturesRepository", "Upload failed: ${e.message}", e)
             throw e
         }
     }

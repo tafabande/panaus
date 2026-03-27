@@ -57,11 +57,12 @@ class UserViewModel(application: Application, private val repository: UserReposi
         Log.d(TAG, "Initializing UserViewModel and setting up AuthStateListener")
         FirebaseAuth.getInstance().addAuthStateListener { auth ->
             val user = auth.currentUser
-            Log.d(TAG, "AuthState changed: User is ${if (user != null) "Logged in (${user.uid})" else "Logged out"}")
+            Log.d(TAG, "TRACE: AuthState changed. User: ${if (user != null) "LOGGED_IN (${user.uid})" else "LOGGED_OUT"}")
             if (user != null) {
                 observeUser(user.uid)
                 observeRequests(user.uid)
             } else {
+                Log.d(TAG, "TRACE: Auth current user is null. Cancelling observers and clearing _userProfile.")
                 observerJob?.cancel()
                 requestObserverJob?.cancel()
                 _userProfile.value = null
@@ -79,7 +80,7 @@ class UserViewModel(application: Application, private val repository: UserReposi
                     GlobalErrorHandler.recordException(e) 
                 }
                 .collectLatest { profile ->
-                    Log.d(TAG, "Received profile update for $uid: ${profile?.name ?: "null/not-found"}")
+                    Log.d(TAG, "TRACE: Received profile update for $uid. Is null: ${profile == null}, name: ${profile?.name}, coupleId: ${profile?.coupleId}")
                     _userProfile.value = profile
                     
                     // Observe partner independently
@@ -145,10 +146,10 @@ class UserViewModel(application: Application, private val repository: UserReposi
         }
     }
     
-    fun setDiscoverability(isDiscoverable: Boolean) {
+    fun updateDiscoverable(discoverable: Boolean) {
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         viewModelScope.launch {
-            val result = repository.updateDiscoverability(currentUserId, isDiscoverable)
+            val result = repository.updateDiscoverable(currentUserId, discoverable)
             result.onFailure { GlobalErrorHandler.recordException(it) }
         }
     }
@@ -200,16 +201,16 @@ class UserViewModel(application: Application, private val repository: UserReposi
         _themePreference.value = theme
     }
 
-    private val _timelineEvents = MutableStateFlow<List<com.ourspace.app.data.model.TimelineEvent>>(emptyList())
-    val timelineEvents: StateFlow<List<com.ourspace.app.data.model.TimelineEvent>> = _timelineEvents.asStateFlow()
+    private val _timelineEvents = MutableStateFlow<List<com.ourspace.app.data.model.RelationshipEvent>>(emptyList())
+    val timelineEvents: StateFlow<List<com.ourspace.app.data.model.RelationshipEvent>> = _timelineEvents.asStateFlow()
 
-    private var timelineJob: kotlinx.coroutines.Job? = null
+    private var relationshipJob: Job? = null
 
     fun startObservingTimeline() {
         val coupleId = _userProfile.value?.coupleId ?: return
-        timelineJob?.cancel()
-        timelineJob = viewModelScope.launch {
-            repository.observeTimelineEvents(coupleId).collect {
+        relationshipJob?.cancel()
+        relationshipJob = viewModelScope.launch {
+            repository.getRelationshipEvents(coupleId).collect {
                 _timelineEvents.value = it
             }
         }
@@ -217,8 +218,8 @@ class UserViewModel(application: Application, private val repository: UserReposi
 
     fun addTimelineEvent(name: String, date: String, description: String, category: String = "MILESTONE") {
         val coupleId = _userProfile.value?.coupleId ?: return
-        val event = com.ourspace.app.data.model.TimelineEvent(
-            name = name,
+        val event = com.ourspace.app.data.model.RelationshipEvent(
+            title = name,
             date = date,
             description = description,
             category = category,
@@ -226,7 +227,8 @@ class UserViewModel(application: Application, private val repository: UserReposi
         )
         viewModelScope.launch {
             _isSavingProfile.value = true
-            repository.addTimelineEvent(event)
+            val result = repository.saveRelationshipEvent(event)
+            result.onFailure { GlobalErrorHandler.recordException(it) }
             _isSavingProfile.value = false
         }
     }
@@ -266,26 +268,15 @@ class UserViewModel(application: Application, private val repository: UserReposi
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         _pairingState.value = PairingState.Loading
         viewModelScope.launch {
-            // We need a way to send request by ID directly.
-            // For now, I'll reuse the logic from sendPairingRequest but with ID
-            val requestId = listOf(currentUserId, partnerId).sorted().joinToString("_")
-            val requestData = hashMapOf(
-                "fromId" to currentUserId,
-                "toId" to partnerId,
-                "status" to "PENDING",
-                "createdAt" to com.ourspace.app.data.util.DateUtils.getCurrentIsoTime()
+            repository.sendPairingRequestById(currentUserId, partnerId).fold(
+                onSuccess = { _ -> _pairingState.value = PairingState.RequestSent("User found via search") },
+                onFailure = { error -> _pairingState.value = PairingState.Error(error.message ?: "Failed to send request") }
             )
-            try {
-                com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                    .collection("pairingRequests").document(requestId).set(requestData).await()
-                _pairingState.value = PairingState.RequestSent("User found via search")
-            } catch (e: Exception) {
-                _pairingState.value = PairingState.Error(e.message ?: "Failed to send request")
-            }
         }
     }
 
     fun logout() {
+        Log.d(TAG, "TRACE: logout() called. Exiting...")
         FirebaseAuth.getInstance().signOut()
     }
 }

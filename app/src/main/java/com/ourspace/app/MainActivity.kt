@@ -75,11 +75,23 @@ class MainActivity : ComponentActivity() {
         try {
             FirebaseApp.initializeApp(this)
             val firebaseAppCheck = FirebaseAppCheck.getInstance()
-            // Using DebugAppCheckProviderFactory for development environment
-            firebaseAppCheck.installAppCheckProviderFactory(
-                DebugAppCheckProviderFactory.getInstance()
-            )
-            android.util.Log.d("MainActivity", "Firebase and App Check initialized with Debug provider. Check logs for debug token and register it in Firebase Console.")
+            
+            if (BuildConfig.DEBUG) {
+                firebaseAppCheck.installAppCheckProviderFactory(
+                    DebugAppCheckProviderFactory.getInstance()
+                )
+                android.util.Log.d("MainActivity", "App Check: Installed Debug Provider.")
+                // IMPORTANT: The debug token is printed to Logcat by the DebugAppCheckProviderFactory.
+                // We'll add an extra log to remind the user to look for it.
+                android.util.Log.i("MainActivity", "------------------------------------------------------------")
+                android.util.Log.i("MainActivity", "APP CHECK DEBUG TOKEN: Look for 'Enter this debug secret into the allowed debug tokens' in Logcat!")
+                android.util.Log.i("MainActivity", "------------------------------------------------------------")
+            } else {
+                firebaseAppCheck.installAppCheckProviderFactory(
+                    PlayIntegrityAppCheckProviderFactory.getInstance()
+                )
+                android.util.Log.d("MainActivity", "App Check: Installed Play Integrity Provider.")
+            }
         } catch (e: Exception) {
             android.util.Log.e("MainActivity", "Firebase initialization failed: ${e.message}")
         }
@@ -99,10 +111,12 @@ class MainActivity : ComponentActivity() {
             
             val featuresViewModel: FeaturesViewModel = viewModel(factory = factory)
 
+            // TRACE: Monitor UserProfile and CoupleId state changes
             LaunchedEffect(userProfile) {
-                if (userProfile?.coupleId != null) {
-                    featuresViewModel.startObserving(userProfile!!)
-                }
+                android.util.Log.d("MainActivity", "TRACE: UserProfile changed. Is null: ${userProfile == null}, coupleId: ${userProfile?.coupleId}")
+                userProfile?.let {
+                    featuresViewModel.startObserving(it)
+                } ?: featuresViewModel.stopObserving()
             }
 
             val navController = rememberNavController()

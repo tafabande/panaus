@@ -234,8 +234,8 @@ fun PairingScreen(
                         )
                     }
                     Switch(
-                        checked = userProfile?.isDiscoverable ?: false,
-                        onCheckedChange = { viewModel.setDiscoverability(it) },
+                        checked = userProfile?.discoverable ?: false,
+                        onCheckedChange = { viewModel.updateDiscoverable(it) },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.White,
                             checkedTrackColor = Color(0xFFF43F5E),

@@ -64,6 +64,9 @@ fun DashboardScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        // Background decor moved here to avoid blocking touches
+        FloatingDecor()
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -181,7 +184,7 @@ fun DashboardScreen(
                     Spacer(modifier = Modifier.weight(1f))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         val interactionTypes = listOf(
@@ -190,21 +193,28 @@ fun DashboardScreen(
                             Triple("kiss", "Kiss 💋", Color(0xFF8B00FF))
                         )
                         
+                        val isPaired = !userProfile?.coupleId.isNullOrBlank()
+                        
                         interactionTypes.forEach { interaction ->
                             val type = interaction.first
                             val label = interaction.second
                             
-                            TextButton(
+                            // Using FilledTonalButton for better visibility and larger hit area
+                            FilledTonalButton(
                                 onClick = {
-                                    Log.d("DashboardScreen", "Sending interaction: $type")
-                                    userProfile?.let { u ->
-                                        featuresViewModel.sendInteraction(u.coupleId ?: "", u.userId, type)
+                                    if (isPaired) {
+                                        Log.d("DashboardScreen", "TRACE: User tapped interaction button: $type")
+                                        userProfile?.let { u ->
+                                            featuresViewModel.sendInteraction(u.coupleId!!, u.userId, type)
+                                        }
                                     }
                                 },
-                                modifier = Modifier.weight(1f),
-                                contentPadding = PaddingValues(0.dp)
+                                enabled = isPaired,
+                                modifier = Modifier.weight(1f).height(40.dp),
+                                contentPadding = PaddingValues(0.dp),
+                                shape = RoundedCornerShape(12.dp)
                             ) {
-                                Text(label, fontSize = 10.sp, color = MaterialTheme.colorScheme.primary)
+                                Text(label, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -451,8 +461,7 @@ fun DashboardScreen(
         }
     }
 
-    // Lovely floating decor
-    FloatingDecor()
+    // Removed FloatingDecor() call from here to background
 }
 }
 

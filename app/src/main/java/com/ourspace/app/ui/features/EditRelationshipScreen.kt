@@ -18,13 +18,35 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditRelationshipScreen(
-    coupleId: String,
+    userProfile: com.ourspace.app.data.model.UserProfile?,
     viewModel: FeaturesViewModel,
     onNavigateBack: () -> Unit
 ) {
+    val coupleId = userProfile?.coupleId
+    
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("") } // Store as YYYY-MM-DD
+    var date by remember { mutableStateOf("") }
+
+    if (coupleId.isNullOrBlank()) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Add Milestone") },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    }
+                )
+            }
+        ) { padding ->
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                Text("Link with a partner to add milestones to your journey.")
+            }
+        }
+        return
+    }
 
     Scaffold(
         topBar = {
@@ -81,16 +103,10 @@ fun EditRelationshipScreen(
                 singleLine = true
             )
 
-            OutlinedTextField(
+            com.ourspace.app.ui.components.AuraDatePickerField(
                 value = date,
                 onValueChange = { date = it },
-                label = { Text("Date (YYYY-MM-DD)") },
-                placeholder = { Text("2024-03-26") },
-                modifier = Modifier.fillMaxWidth(),
-                trailingIcon = {
-                    Icon(Icons.Default.CalendarToday, contentDescription = "Select Date")
-                },
-                singleLine = true
+                label = "Date"
             )
 
             OutlinedTextField(

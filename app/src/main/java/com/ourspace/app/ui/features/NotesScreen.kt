@@ -58,10 +58,15 @@ fun NotesScreen(
             )
         },
         floatingActionButton = {
+            val isUnlinked = userProfile?.coupleId.isNullOrBlank()
             FloatingActionButton(
-                onClick = { showNoteDialog = Note(coupleId = userProfile?.coupleId ?: "", senderId = userProfile?.userId ?: "") },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
+                onClick = { 
+                    if (!isUnlinked) {
+                        showNoteDialog = Note(coupleId = userProfile?.coupleId ?: "", senderId = userProfile?.userId ?: "") 
+                    }
+                },
+                containerColor = if (isUnlinked) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.primary,
+                contentColor = if (isUnlinked) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onPrimary,
                 shape = CircleShape
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Note")
@@ -118,10 +123,13 @@ fun NotesScreen(
 
             // Notes Grid
             if (notes.isEmpty()) {
+                val isUnlinked = userProfile?.coupleId.isNullOrBlank()
                 EmptyState(
                     icon = Icons.AutoMirrored.Filled.Notes,
-                    title = "No Shared Notes Yet",
-                    description = "Capture your first shared memory, link, or digital sticky note here."
+                    title = if (isUnlinked) "Shared Space" else "No Shared Notes Yet",
+                    description = if (isUnlinked) 
+                        "Link with a partner to start sharing notes, links, and memories in your private space."
+                    else "Capture your first shared memory, link, or digital sticky note here."
                 )
             } else {
                 LazyVerticalGrid(
