@@ -16,6 +16,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,11 +35,26 @@ import com.ourspace.app.data.util.DateUtils
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimelineScreen(
+    userProfile: com.ourspace.app.data.model.UserProfile?,
     viewModel: FeaturesViewModel,
     onAddEvent: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val timelineItems by viewModel.combinedTimeline.collectAsState()
+    
+    var showSelectionDialog by remember { mutableStateOf(false) }
+    var showCaptionDialog by remember { mutableStateOf(false) }
+    var pendingUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    var captionText by remember { mutableStateOf("") }
+
+    val photoPicker = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            pendingUri = uri
+            showCaptionDialog = true
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -54,11 +72,11 @@ fun TimelineScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = onAddEvent,
+                onClick = { showSelectionDialog = true },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Event")
+                Icon(Icons.Default.Add, contentDescription = "Add Item")
             }
         }
     ) { padding ->
@@ -98,6 +116,93 @@ fun TimelineScreen(
                 }
             }
         }
+    }
+
+    if (showSelectionDialog) {
+        AlertDialog(
+            onDismissRequest = { showSelectionDialog = false },
+            title = { Text("Add to Journey") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    TextButton(
+                        onClick = {
+                            showSelectionDialog = false
+                            onAddEvent()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Default.Star, contentDescription = null)
+                            Spacer(Modifier.width(12.dp))
+                            Text("Add Milestone", style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                    TextButton(
+                        onClick = {
+                            showSelectionDialog = false
+                            photoPicker.launch(
+                                androidx.activity.result.PickVisualMediaRequest(
+                                    androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly
+                                )
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Default.PhotoLibrary, contentDescription = null)
+                            Spacer(Modifier.width(12.dp))
+                            Text("Add Photo", style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                }
+            },
+            confirmButton = {}
+        )
+    }
+
+    if (showCaptionDialog && pendingUri != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                showCaptionDialog = false
+                pendingUri = null
+                captionText = ""
+            },
+            title = { Text("Add Photo Caption") },
+            text = {
+                OutlinedTextField(
+                    value = captionText,
+                    onValueChange = { captionText = it },
+                    label = { Text("Memory details...") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (userProfile != null && pendingUri != null) {
+                        viewModel.uploadMemory(
+                            userProfile.coupleId ?: "",
+                            userProfile.userId,
+                            pendingUri!!,
+                            captionText
+                        )
+                    }
+                    showCaptionDialog = false
+                    pendingUri = null
+                    captionText = ""
+                }) {
+                    Text("Upload", color = MaterialTheme.colorScheme.primary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    showCaptionDialog = false
+                    pendingUri = null
+                    captionText = ""
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
@@ -170,6 +275,17 @@ fun TimelineEntry(item: TimelineItem) {
                     AsyncImage(
                         model = item.memory.imageUrl,
                         contentDescription = "Memory photo",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else if (item is TimelineItem.Relationship && item.event.imageUrl.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    AsyncImage(
+                        model = item.event.imageUrl,
+                        contentDescription = "Milestone photo",
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(200.dp)

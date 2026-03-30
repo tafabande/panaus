@@ -27,7 +27,7 @@ class FeaturesRepository {
         awaitClose { listener.remove() }
     }
 
-    suspend fun saveNote(coupleId: String, note: Note) {
+    suspend fun saveNote(coupleId: String, note: Note) = withContext(Dispatchers.IO) {
         val ref = if (note.id.isEmpty()) {
             db.collection("couples").document(coupleId).collection("notes").document()
         } else {
@@ -41,38 +41,36 @@ class FeaturesRepository {
         }
     }
 
-    suspend fun deleteNote(coupleId: String, noteId: String) {
+    suspend fun deleteNote(coupleId: String, noteId: String) = withContext(Dispatchers.IO) {
         db.collection("couples").document(coupleId).collection("notes").document(noteId).delete().await()
     }
 
     // --- Mood & Wellness ---
     fun observePartnerMood(coupleId: String, partnerId: String) = callbackFlow {
-        val listener = db.collection("moods")
-            .whereEqualTo("coupleId", coupleId)
-            .whereEqualTo("userId", partnerId)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
-            .limit(1)
+        val listener = db.collection("users").document(partnerId)
             .addSnapshotListener { snapshot, _ ->
-                snapshot?.documents?.firstOrNull()?.let {
-                    trySend(it.toObject(Mood::class.java))
-                } ?: trySend(null)
+                val user = snapshot?.toObject(UserProfile::class.java)
+                trySend(user?.mood)
             }
         awaitClose { listener.remove() }
     }
 
-    suspend fun updateMood(mood: Mood) {
-        db.collection("moods").document(mood.userId)
-            .set(mood, SetOptions.merge()).await()
+    suspend fun updateMood(coupleId: String, mood: Mood) = withContext(Dispatchers.IO) {
+        // 1. Update historical record in couple's space
+        if (coupleId.isNotEmpty()) {
+            val historyRef = db.collection("couples").document(coupleId).collection("mood_history").document()
+            val finalMood = mood.copy(id = historyRef.id)
+            historyRef.set(finalMood, SetOptions.merge()).await()
+        }
             
-        // Also update the user's current mood in their profile for dashboard visibility
+        // 2. Update the user's current mood in their profile for dashboard visibility
         db.collection("users").document(mood.userId)
             .update("mood", "${mood.emoji} ${mood.note}".trim()).await()
     }
 
     // --- Todos ---
     fun observeTodos(coupleId: String): Flow<List<TodoItem>> = callbackFlow {
-        val listener = db.collection("todos")
-            .whereEqualTo("coupleId", coupleId)
+        val listener = db.collection("couples").document(coupleId).collection("todos")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -87,27 +85,26 @@ class FeaturesRepository {
         awaitClose { listener.remove() }
     }
 
-    suspend fun addTodo(todo: TodoItem) = withContext(Dispatchers.IO) {
-        val ref = db.collection("todos").document()
-        val finalTodo = todo.copy().apply { id = ref.id }
+    suspend fun addTodo(coupleId: String, todo: TodoItem) = withContext(Dispatchers.IO) {
+        val ref = db.collection("couples").document(coupleId).collection("todos").document()
+        val finalTodo = todo.copy(id = ref.id)
         ref.set(finalTodo, SetOptions.merge()).await()
     }
 
-    suspend fun toggleTodo(id: String, isCompleted: Boolean, completedAt: Long?) = withContext(Dispatchers.IO) {
-        db.collection("todos").document(id).update(
+    suspend fun toggleTodo(coupleId: String, id: String, isCompleted: Boolean, completedAt: Long?) = withContext(Dispatchers.IO) {
+        db.collection("couples").document(coupleId).collection("todos").document(id).update(
             "isCompleted", isCompleted,
             "completedAt", completedAt
         ).await()
     }
 
-    suspend fun deleteTodo(id: String) = withContext(Dispatchers.IO) {
-        db.collection("todos").document(id).delete().await()
+    suspend fun deleteTodo(coupleId: String, id: String) = withContext(Dispatchers.IO) {
+        db.collection("couples").document(coupleId).collection("todos").document(id).delete().await()
     }
 
     // --- Calendar Events ---
     fun observeEvents(coupleId: String): Flow<List<CalendarEvent>> = callbackFlow {
-        val listener = db.collection("events")
-            .whereEqualTo("coupleId", coupleId)
+        val listener = db.collection("couples").document(coupleId).collection("events")
             .orderBy("date", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -122,22 +119,21 @@ class FeaturesRepository {
         awaitClose { listener.remove() }
     }
 
-    suspend fun addEvent(event: CalendarEvent) = withContext(Dispatchers.IO) {
+    suspend fun addEvent(coupleId: String, event: CalendarEvent) = withContext(Dispatchers.IO) {
         try {
-            val ref = db.collection("events").document()
-            val finalEvent = event.copy().apply { id = ref.id }
+            val ref = db.collection("couples").document(coupleId).collection("events").document()
+            val finalEvent = event.copy(id = ref.id)
             ref.set(finalEvent, SetOptions.merge()).await()
         } catch (e: Exception) {
             throw e
         }
     }
 
-    // --- Moods ---
+    // --- Mood History ---
     fun observeMoods(coupleId: String): Flow<List<Mood>> = callbackFlow {
-        val listener = db.collection("moods")
-            .whereEqualTo("coupleId", coupleId)
+        val listener = db.collection("couples").document(coupleId).collection("mood_history")
             .orderBy("timestamp", Query.Direction.DESCENDING)
-            .limit(10)
+            .limit(20)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)
@@ -151,16 +147,12 @@ class FeaturesRepository {
         awaitClose { listener.remove() }
     }
 
-    suspend fun addMood(mood: Mood) = withContext(Dispatchers.IO) {
-        val ref = db.collection("moods").document()
-        val finalMood = mood.copy().apply { id = ref.id }
-        ref.set(finalMood, SetOptions.merge()).await()
-    }
+    // Deprecated in favor of updateMood which handles both
+    suspend fun addMood(coupleId: String, mood: Mood) = updateMood(coupleId, mood)
 
     // --- Asks ---
     fun observeAsks(coupleId: String): Flow<List<Ask>> = callbackFlow {
-        val listener = db.collection("asks")
-            .whereEqualTo("coupleId", coupleId)
+        val listener = db.collection("couples").document(coupleId).collection("asks")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -175,14 +167,14 @@ class FeaturesRepository {
         awaitClose { listener.remove() }
     }
 
-    suspend fun addAsk(ask: Ask) = withContext(Dispatchers.IO) {
-        val ref = db.collection("asks").document()
-        val finalAsk = ask.copy().apply { id = ref.id }
+    suspend fun addAsk(coupleId: String, ask: Ask) = withContext(Dispatchers.IO) {
+        val ref = db.collection("couples").document(coupleId).collection("asks").document()
+        val finalAsk = ask.copy(id = ref.id)
         ref.set(finalAsk, SetOptions.merge()).await()
     }
 
-    suspend fun updateAskStatus(id: String, status: String, respondedAt: Long?) = withContext(Dispatchers.IO) {
-        db.collection("asks").document(id).update(
+    suspend fun updateAskStatus(coupleId: String, id: String, status: String, respondedAt: Long?) = withContext(Dispatchers.IO) {
+        db.collection("couples").document(coupleId).collection("asks").document(id).update(
             "status", status,
             "respondedAt", respondedAt
         ).await()
@@ -190,8 +182,7 @@ class FeaturesRepository {
 
     // --- Interactions (Pokes, Hugs) ---
     fun observeInteractions(coupleId: String): Flow<List<Interaction>> = callbackFlow {
-        val listener = db.collection("interactions")
-            .whereEqualTo("coupleId", coupleId)
+        val listener = db.collection("couples").document(coupleId).collection("interactions")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .limit(10)
             .addSnapshotListener { snapshot, error ->
@@ -209,14 +200,14 @@ class FeaturesRepository {
         awaitClose { listener.remove() }
     }
 
-    suspend fun sendInteraction(interaction: Interaction) = withContext(Dispatchers.IO) {
-        val ref = db.collection("interactions").document()
-        val finalInteraction = interaction.copy().apply { id = ref.id }
+    suspend fun sendInteraction(coupleId: String, interaction: Interaction) = withContext(Dispatchers.IO) {
+        val ref = db.collection("couples").document(coupleId).collection("interactions").document()
+        val finalInteraction = interaction.copy(id = ref.id)
         ref.set(finalInteraction, SetOptions.merge()).await()
     }
 
-    suspend fun markInteractionAsRead(interactionId: String) = withContext(Dispatchers.IO) {
-        db.collection("interactions").document(interactionId).update("status", "read").await()
+    suspend fun markInteractionAsRead(coupleId: String, interactionId: String) = withContext(Dispatchers.IO) {
+        db.collection("couples").document(coupleId).collection("interactions").document(interactionId).update("status", "read").await()
     }
 
     // --- Memories ---
@@ -263,57 +254,17 @@ class FeaturesRepository {
         }
     }
 
-    suspend fun saveRelationshipEvent(event: RelationshipEvent): Result<Unit> = withContext(Dispatchers.IO) {
-        return@withContext try {
-            val docRef = if (event.id.isEmpty()) {
-                db.collection("couples").document(event.coupleId).collection("relationship_history").document()
-            } else {
-                db.collection("couples").document(event.coupleId).collection("relationship_history").document(event.id)
-            }
-            val finalEvent = event.copy(id = docRef.id)
-            docRef.set(finalEvent, SetOptions.merge()).await()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+
+    suspend fun deleteRelationshipEvent(coupleId: String, eventId: String) = withContext(Dispatchers.IO) {
+        db.collection("couples").document(coupleId).collection("relationship_history").document(eventId).delete().await()
     }
 
-    fun getRelationshipEvents(coupleId: String): Flow<List<RelationshipEvent>> = callbackFlow {
-        if (coupleId.isEmpty()) {
-            trySend(emptyList())
-            close()
-            return@callbackFlow
-        }
-        val listener = db.collection("couples").document(coupleId).collection("relationship_history")
-            .orderBy("date")
-            .addSnapshotListener { snapshot, e ->
-                if (e != null) {
-                    Log.e("FeaturesRepository", "Error observing relationship events", e)
-                    return@addSnapshotListener
-                }
-                val events = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(RelationshipEvent::class.java)?.apply { id = doc.id }
-                } ?: emptyList()
-                trySend(events)
-            }
-        awaitClose { listener.remove() }
-    }
-
-    suspend fun deleteRelationshipEvent(coupleId: String, eventId: String): Result<Unit> = withContext(Dispatchers.IO) {
-        return@withContext try {
-            db.collection("couples").document(coupleId).collection("relationship_history").document(eventId).delete().await()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun submitQuizResponse(coupleId: String, response: QuizResponse) {
+    suspend fun submitQuizResponse(coupleId: String, response: QuizResponse) = withContext(Dispatchers.IO) {
         val docId = "${response.quizId}_${response.userId}"
         db.collection("couples").document(coupleId)
             .collection("quizzes").document(docId)
             .set(response, SetOptions.merge()).await()
-}
+    }
 
     fun observeQuizResults(coupleId: String, quizId: String): Flow<GameResult?> = callbackFlow {
         val listener = db.collection("couples").document(coupleId)
@@ -354,5 +305,51 @@ class FeaturesRepository {
                 }
             }
         awaitClose { listener.remove() }
+    }
+
+    // --- Relationship Events ---
+    fun observeRelationshipEvents(coupleId: String): Flow<List<RelationshipEvent>> = callbackFlow {
+        if (coupleId.isEmpty()) {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+        val listener = db.collection("couples").document(coupleId).collection("relationship_history")
+            .orderBy("date", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.e("FeaturesRepository", "Error observing relationship events", e)
+                    close(e)
+                    return@addSnapshotListener
+                }
+                val events = snapshot?.documents?.mapNotNull { doc ->
+                    doc.toObject(RelationshipEvent::class.java)?.apply { id = doc.id }
+                } ?: emptyList()
+                trySend(events)
+            }
+        awaitClose { listener.remove() }
+    }
+
+    suspend fun saveRelationshipEvent(coupleId: String, event: RelationshipEvent, localUri: android.net.Uri? = null) = withContext(Dispatchers.IO) {
+        var finalEvent = event
+        
+        if (localUri != null) {
+            val folder = "milestones/$coupleId"
+            val fileName = "milestone_${System.currentTimeMillis()}.jpg"
+            val uploadResult = mediaRepository.uploadMedia(folder, fileName, localUri)
+            if (uploadResult.isSuccess) {
+                finalEvent = finalEvent.copy(imageUrl = uploadResult.getOrNull()!!)
+            } else {
+                Log.e("FeaturesRepository", "Milestone image upload failed", uploadResult.exceptionOrNull())
+            }
+        }
+
+        val docRef = if (finalEvent.id.isEmpty()) {
+            db.collection("couples").document(coupleId).collection("relationship_history").document()
+        } else {
+            db.collection("couples").document(coupleId).collection("relationship_history").document(finalEvent.id)
+        }
+        finalEvent = finalEvent.copy(id = docRef.id)
+        docRef.set(finalEvent, SetOptions.merge()).await()
     }
 }

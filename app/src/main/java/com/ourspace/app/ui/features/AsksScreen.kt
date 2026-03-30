@@ -139,14 +139,20 @@ fun AsksScreen(
                             Spacer(modifier = Modifier.height(24.dp))
                             
                             val isCustomEmpty = requestType == "Custom" && requestText.isBlank()
+                            val isUnpaired = userProfile?.partnerId.isNullOrBlank()
                             Button(
                                 onClick = {
                                     val finalSendText = if (requestType == "Custom") requestText.trim() else requestType
                                     userProfile?.let { profile ->
+                                        val partnerId = profile.partnerId
+                                        if (partnerId.isNullOrBlank()) {
+                                            com.ourspace.app.util.GlobalErrorHandler.showMessage("Link with a partner first to send requests.")
+                                            return@Button
+                                        }
                                         viewModel.addAsk(
                                             coupleId = profile.coupleId ?: "",
                                             fromUserId = profile.userId,
-                                            toUserId = profile.partnerId ?: "",
+                                            toUserId = partnerId,
                                             text = finalSendText,
                                             type = requestType
                                         )
@@ -157,12 +163,12 @@ fun AsksScreen(
                                         com.ourspace.app.util.GlobalErrorHandler.showMessage("Cannot send request while offline/loading")
                                     }
                                 },
-                                enabled = !isCustomEmpty,
+                                enabled = !isCustomEmpty && !isUnpaired,
                                 modifier = Modifier.fillMaxWidth().height(50.dp),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                             ) {
-                                Text("Send Request", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                                Text(if (isUnpaired) "Link a partner to send requests" else "Send Request", fontSize = 14.sp, fontWeight = FontWeight.Medium)
                             }
                         }
                     }
@@ -246,9 +252,10 @@ fun AsksScreen(
                             
                             if (amIReceiver) {
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    ActionBtn(text = "Accept", textColor = Color(0xFF10B981), bgColor = Color(0xFFECFDF5), onClick = { viewModel.updateAskStatus(ask.id, "accepted") }, modifier = Modifier.weight(1f))
-                                    ActionBtn(text = "Later", textColor = Color(0xFFD97706), bgColor = Color(0xFFFFFBEB), onClick = { viewModel.updateAskStatus(ask.id, "later") }, modifier = Modifier.weight(1f))
-                                    ActionBtn(text = "Decline", textColor = Color(0xFFE11D48), bgColor = Color(0xFFFFF1F2), onClick = { viewModel.updateAskStatus(ask.id, "declined") }, modifier = Modifier.weight(1f))
+                                    val cid = userProfile?.coupleId ?: ""
+                                    ActionBtn(text = "Accept", textColor = Color(0xFF10B981), bgColor = Color(0xFFECFDF5), onClick = { viewModel.updateAskStatus(cid, ask.id, "accepted") }, modifier = Modifier.weight(1f))
+                                    ActionBtn(text = "Later", textColor = Color(0xFFD97706), bgColor = Color(0xFFFFFBEB), onClick = { viewModel.updateAskStatus(cid, ask.id, "later") }, modifier = Modifier.weight(1f))
+                                    ActionBtn(text = "Decline", textColor = Color(0xFFE11D48), bgColor = Color(0xFFFFF1F2), onClick = { viewModel.updateAskStatus(cid, ask.id, "declined") }, modifier = Modifier.weight(1f))
                                 }
                             } else {
                                 Text(

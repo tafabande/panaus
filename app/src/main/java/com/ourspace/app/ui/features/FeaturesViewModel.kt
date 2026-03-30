@@ -47,8 +47,8 @@ class FeaturesViewModel(
     private val _quizResults = MutableStateFlow<Map<String, GameResult?>>(emptyMap())
     val quizResults: StateFlow<Map<String, GameResult?>> = _quizResults.asStateFlow()
 
-    private val _partnerMood = MutableStateFlow<Mood?>(null)
-    val partnerMood: StateFlow<Mood?> = _partnerMood.asStateFlow()
+    private val _partnerMood = MutableStateFlow<String?>(null)
+    val partnerMood: StateFlow<String?> = _partnerMood.asStateFlow()
 
     private val _relationshipEvents = MutableStateFlow<List<RelationshipEvent>>(emptyList())
     val relationshipEvents: StateFlow<List<RelationshipEvent>> = _relationshipEvents.asStateFlow()
@@ -86,6 +86,7 @@ class FeaturesViewModel(
     private var asksJob: Job? = null
     private var interactionsJob: Job? = null
     private var memoriesJob: Job? = null
+    private var relationshipEventsJob: Job? = null
     private var partnerMoodJob: Job? = null
     
     // Throttling for interactions
@@ -100,6 +101,7 @@ class FeaturesViewModel(
         asksJob?.cancel()
         interactionsJob?.cancel()
         memoriesJob?.cancel()
+        relationshipEventsJob?.cancel()
         partnerMoodJob?.cancel()
 
         _notes.value = emptyList()
@@ -176,10 +178,22 @@ class FeaturesViewModel(
                 .collect { _memories.value = it }
         }
 
-        viewModelScope.launch {
-            repository.getRelationshipEvents(coupleId)
+        relationshipEventsJob?.cancel()
+        relationshipEventsJob = viewModelScope.launch {
+            repository.observeRelationshipEvents(coupleId)
                 .catch { e -> Log.e("FeaturesViewModel", "RelationshipEvents error", e); GlobalErrorHandler.recordException(e) }
                 .collect { _relationshipEvents.value = it }
+        }
+
+        // Observe partner mood if partner exists
+        val partnerId = userProfile.partnerId
+        if (!partnerId.isNullOrBlank()) {
+            partnerMoodJob?.cancel()
+            partnerMoodJob = viewModelScope.launch {
+                repository.observePartnerMood(coupleId, partnerId)
+                    .catch { e -> Log.e("FeaturesViewModel", "PartnerMood error", e); GlobalErrorHandler.recordException(e) }
+                    .collect { moodString -> _partnerMood.value = moodString }
+            }
         }
     }
 
@@ -271,24 +285,24 @@ class FeaturesViewModel(
                     timestamp = System.currentTimeMillis(),
                     completedAt = null
                 )
-                repository.addTodo(todo)
+                repository.addTodo(coupleId, todo)
             }
         }
     }
 
-    fun toggleTodo(todo: TodoItem) {
+    fun toggleTodo(coupleId: String, todo: TodoItem) {
         viewModelScope.launch {
             GlobalErrorHandler.runWithCatch {
                 val completedAt = if (!todo.isCompleted) System.currentTimeMillis() else null
-                repository.toggleTodo(todo.id, !todo.isCompleted, completedAt)
+                repository.toggleTodo(coupleId, todo.id, !todo.isCompleted, completedAt)
             }
         }
     }
 
-    fun deleteTodo(todoId: String) {
+    fun deleteTodo(coupleId: String, todoId: String) {
         viewModelScope.launch {
             GlobalErrorHandler.runWithCatch {
-                repository.deleteTodo(todoId)
+                repository.deleteTodo(coupleId, todoId)
             }
         }
     }
@@ -307,7 +321,7 @@ class FeaturesViewModel(
                     createdBy = creatorId,
                     timestamp = System.currentTimeMillis()
                 )
-                repository.addEvent(event)
+                repository.addEvent(coupleId, event)
             }
         }
     }
@@ -323,7 +337,7 @@ class FeaturesViewModel(
                     note = note.trim(),
                     timestamp = System.currentTimeMillis()
                 )
-                repository.updateMood(mood)
+                repository.updateMood(coupleId, mood)
             }
         }
     }
@@ -343,15 +357,15 @@ class FeaturesViewModel(
                     timestamp = System.currentTimeMillis(),
                     respondedAt = null
                 )
-                repository.addAsk(ask)
+                repository.addAsk(coupleId, ask)
             }
         }
     }
 
-    fun updateAskStatus(askId: String, status: String) {
+    fun updateAskStatus(coupleId: String, askId: String, status: String) {
         viewModelScope.launch {
             GlobalErrorHandler.runWithCatch {
-                repository.updateAskStatus(askId, status, System.currentTimeMillis())
+                repository.updateAskStatus(coupleId, askId, status, System.currentTimeMillis())
             }
         }
     }
@@ -381,7 +395,7 @@ class FeaturesViewModel(
                     timestamp = System.currentTimeMillis(),
                     status = "unread"
                 )
-                repository.sendInteraction(interaction)
+                repository.sendInteraction(coupleId, interaction)
                 Log.d("FeaturesViewModel", "Successfully sent interaction: $type")
                 GlobalErrorHandler.showMessage("${type.replaceFirstChar { it.uppercase() }} sent! ❤️")
             } catch (e: Exception) {
@@ -391,19 +405,22 @@ class FeaturesViewModel(
         }
     }
 
-    fun markInteractionAsRead(interactionId: String) {
+    fun markInteractionAsRead(coupleId: String, interactionId: String) {
         viewModelScope.launch {
             GlobalErrorHandler.runWithCatch {
-                repository.markInteractionAsRead(interactionId)
+                repository.markInteractionAsRead(coupleId, interactionId)
             }
         }
     }
 
-    fun saveRelationshipEvent(event: RelationshipEvent) {
+    fun saveRelationshipEvent(coupleId: String, event: RelationshipEvent, localUri: android.net.Uri? = null) {
         viewModelScope.launch {
             _isSavingProfile.value = true
-            val result = repository.saveRelationshipEvent(event)
-            result.onFailure { GlobalErrorHandler.recordException(it) }
+            try {
+                repository.saveRelationshipEvent(coupleId, event, localUri)
+            } catch (e: Exception) {
+                GlobalErrorHandler.recordException(e)
+            }
             _isSavingProfile.value = false
         }
     }
@@ -411,8 +428,11 @@ class FeaturesViewModel(
     fun deleteRelationshipEvent(coupleId: String, eventId: String) {
         viewModelScope.launch {
             _isSavingProfile.value = true
-            val result = repository.deleteRelationshipEvent(coupleId, eventId)
-            result.onFailure { GlobalErrorHandler.recordException(it) }
+            try {
+                repository.deleteRelationshipEvent(coupleId, eventId)
+            } catch (e: Exception) {
+                GlobalErrorHandler.recordException(e)
+            }
             _isSavingProfile.value = false
         }
     }

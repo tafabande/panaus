@@ -145,6 +145,7 @@ fun MainScreen(
             }
             composable(BottomNavItem.Timeline.route) {
                 com.ourspace.app.ui.features.TimelineScreen(
+                    userProfile = userProfile,
                     viewModel = featuresViewModel,
                     onAddEvent = { navController.navigate("edit_relationship") },
                     onNavigateBack = { navController.popBackStack() }

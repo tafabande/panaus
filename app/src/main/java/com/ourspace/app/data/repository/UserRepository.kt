@@ -294,40 +294,4 @@ class UserRepository {
         }
     }
 
-    suspend fun saveRelationshipEvent(event: RelationshipEvent): Result<Unit> = withContext(Dispatchers.IO) {
-        return@withContext try {
-            val docRef = if (event.id.isEmpty()) {
-                db.collection("couples").document(event.coupleId).collection("relationship_history").document()
-            } else {
-                db.collection("couples").document(event.coupleId).collection("relationship_history").document(event.id)
-            }
-            val finalEvent = event.copy(id = docRef.id)
-            docRef.set(finalEvent, SetOptions.merge()).await()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    fun getRelationshipEvents(coupleId: String): Flow<List<RelationshipEvent>> = callbackFlow {
-        if (coupleId.isEmpty()) {
-            trySend(emptyList())
-            close()
-            return@callbackFlow
-        }
-        val listener = db.collection("couples").document(coupleId).collection("relationship_history")
-            .orderBy("date", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, e ->
-                if (e != null) {
-                    Log.e("UserRepository", "Error observing relationship events", e)
-                    close(e)
-                    return@addSnapshotListener
-                }
-                val events = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(RelationshipEvent::class.java)?.apply { id = doc.id }
-                } ?: emptyList()
-                trySend(events)
-            }
-        awaitClose { listener.remove() }
-    }
 }

@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.sp
 import com.ourspace.app.data.model.UserProfile
 import com.ourspace.app.ui.components.EmptyState
 import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
-import androidx.compose.material.icons.filled.PlaylistAddCheck
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -181,7 +180,7 @@ fun TodosScreen(
                         modifier = Modifier.padding(16.dp).fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = { viewModel.toggleTodo(todo) }) {
+                        IconButton(onClick = { viewModel.toggleTodo(userProfile?.coupleId ?: "", todo) }) {
                             Icon(Icons.Outlined.Circle, contentDescription = "Complete", tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
                         }
                         Column(modifier = Modifier.weight(1f).padding(horizontal = 8.dp)) {
@@ -203,7 +202,7 @@ fun TodosScreen(
                                 }
                             }
                         }
-                        IconButton(onClick = { viewModel.deleteTodo(todo.id) }) {
+                        IconButton(onClick = { viewModel.deleteTodo(userProfile?.coupleId ?: "", todo.id) }) {
                             Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
                         }
                     }
@@ -225,7 +224,7 @@ fun TodosScreen(
                             modifier = Modifier.padding(16.dp).fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            IconButton(onClick = { viewModel.toggleTodo(todo) }) {
+                            IconButton(onClick = { viewModel.toggleTodo(userProfile?.coupleId ?: "", todo) }) {
                                 Icon(Icons.Filled.CheckCircle, contentDescription = "Uncomplete", tint = Color(0xFF10B981)) // Keep green for success
                             }
                             Text(
@@ -235,7 +234,7 @@ fun TodosScreen(
                                 color = MaterialTheme.colorScheme.outline,
                                 textDecoration = TextDecoration.LineThrough
                             )
-                            IconButton(onClick = { viewModel.deleteTodo(todo.id) }) {
+                            IconButton(onClick = { viewModel.deleteTodo(userProfile?.coupleId ?: "", todo.id) }) {
                                 Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error.copy(alpha = 0.4f))
                             }
                         }

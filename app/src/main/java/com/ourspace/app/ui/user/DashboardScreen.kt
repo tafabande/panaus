@@ -450,11 +450,11 @@ fun DashboardScreen(
         latestPoke?.let { poke ->
             IncomingInteractionPulse(
                 interaction = poke,
-                onDismiss = { featuresViewModel.markInteractionAsRead(poke.id) },
+                onDismiss = { featuresViewModel.markInteractionAsRead(poke.coupleId, poke.id) },
                 onPokeBack = {
                     userProfile?.let { u ->
                         featuresViewModel.sendInteraction(u.coupleId ?: "", u.userId, "poke")
-                        featuresViewModel.markInteractionAsRead(poke.id)
+                        featuresViewModel.markInteractionAsRead(poke.coupleId, poke.id)
                     }
                 }
             )

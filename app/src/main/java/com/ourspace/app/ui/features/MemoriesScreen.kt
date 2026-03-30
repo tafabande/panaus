@@ -13,7 +13,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.ourspace.app.data.model.UserProfile
 import com.ourspace.app.ui.components.EmptyState
-import androidx.compose.material.icons.filled.PhotoLibrary
 import kotlin.random.Random
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -74,7 +73,7 @@ fun MemoriesScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)

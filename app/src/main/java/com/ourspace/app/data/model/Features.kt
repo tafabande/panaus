@@ -81,6 +81,7 @@ data class RelationshipEvent(
     val title: String = "",
     val description: String = "",
     val date: String = "", // yyyy-MM-dd
+    val imageUrl: String = "",
     val timestamp: Long = System.currentTimeMillis(),
     val category: String = "Milestone" // Milestone, Anniversary, Journey, Memory
 )

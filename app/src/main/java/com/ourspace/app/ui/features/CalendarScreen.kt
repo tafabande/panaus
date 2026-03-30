@@ -96,7 +96,7 @@ fun CalendarScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
                         Column(modifier = Modifier.padding(24.dp)) {
@@ -199,7 +199,7 @@ fun CalendarScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
                         Row(
@@ -265,7 +265,7 @@ fun HorizontalCalendarOverview(
                 modifier = Modifier
                     .width(55.dp)
                     .clip(RoundedCornerShape(20.dp))
-                    .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.White)
+                    .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
                     .clickable { onDateSelect(isoDate) }
                     .padding(vertical = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally

@@ -99,25 +99,20 @@ fun NotesScreen(
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                             modifier = Modifier.size(48.dp)
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(partnerMood?.emoji ?: "😊", fontSize = 24.sp)
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column {
-                            Text(
-                                text = "Your partner is feeling ${partnerMood?.note?.ifBlank { "good" } ?: "good"}",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = "Updated ${DateUtils.formatRelativeTime(partnerMood?.timestamp ?: 0L)}",
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(partnerMood ?: "😊", fontSize = 24.sp)
                         }
                     }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(
+                            text = "Your partner is feeling ${partnerMood ?: "good"}",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
                 }
             }
 

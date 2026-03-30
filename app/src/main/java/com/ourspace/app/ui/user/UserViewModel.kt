@@ -201,38 +201,6 @@ class UserViewModel(application: Application, private val repository: UserReposi
         _themePreference.value = theme
     }
 
-    private val _timelineEvents = MutableStateFlow<List<com.ourspace.app.data.model.RelationshipEvent>>(emptyList())
-    val timelineEvents: StateFlow<List<com.ourspace.app.data.model.RelationshipEvent>> = _timelineEvents.asStateFlow()
-
-    private var relationshipJob: Job? = null
-
-    fun startObservingTimeline() {
-        val coupleId = _userProfile.value?.coupleId ?: return
-        relationshipJob?.cancel()
-        relationshipJob = viewModelScope.launch {
-            repository.getRelationshipEvents(coupleId).collect {
-                _timelineEvents.value = it
-            }
-        }
-    }
-
-    fun addTimelineEvent(name: String, date: String, description: String, category: String = "MILESTONE") {
-        val coupleId = _userProfile.value?.coupleId ?: return
-        val event = com.ourspace.app.data.model.RelationshipEvent(
-            title = name,
-            date = date,
-            description = description,
-            category = category,
-            coupleId = coupleId
-        )
-        viewModelScope.launch {
-            _isSavingProfile.value = true
-            val result = repository.saveRelationshipEvent(event)
-            result.onFailure { GlobalErrorHandler.recordException(it) }
-            _isSavingProfile.value = false
-        }
-    }
-
     fun unlinkPartner() {
         val user = _userProfile.value ?: return
         val currentUserId = user.userId

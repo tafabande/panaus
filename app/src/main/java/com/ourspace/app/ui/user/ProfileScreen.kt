@@ -51,6 +51,7 @@ fun ProfileScreen(
     val scrollState = rememberScrollState()
     val isSaving by userViewModel.isSavingProfile.collectAsState()
     val pairingState by userViewModel.pairingState.collectAsState()
+    val currentTheme by userViewModel.themePreference.collectAsState()
 
     // Local state for editable fields
     var editName by remember(userProfile?.name) { mutableStateOf(userProfile?.name ?: "") }
@@ -347,9 +348,9 @@ fun ProfileScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        ThemeButton("Light", userProfile?.themePreference == "LIGHT") { userViewModel.setTheme("LIGHT") }
-                        ThemeButton("Dark", userProfile?.themePreference == "DARK") { userViewModel.setTheme("DARK") }
-                        ThemeButton("Auto", userProfile?.themePreference == "SYSTEM" || userProfile?.themePreference == null) { userViewModel.setTheme("SYSTEM") }
+                        ThemeButton("Light", currentTheme == "LIGHT") { userViewModel.setTheme("LIGHT") }
+                        ThemeButton("Dark", currentTheme == "DARK") { userViewModel.setTheme("DARK") }
+                        ThemeButton("Auto", currentTheme == "SYSTEM" || currentTheme.isEmpty()) { userViewModel.setTheme("SYSTEM") }
                     }
                     
                     Spacer(modifier = Modifier.height(24.dp))

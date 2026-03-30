@@ -4,7 +4,22 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7d97a845-63c2-437c-994e-39bd76d65c89" name="Changes" comment="" />
+    <list default="true" id="7d97a845-63c2-437c-994e-39bd76d65c89" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/data/model/Features.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/data/model/Features.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/data/repository/FeaturesRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/data/repository/FeaturesRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/data/repository/UserRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/data/repository/UserRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/MainScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/MainScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/AsksScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/AsksScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/EditRelationshipScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/EditRelationshipScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/FeaturesViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/FeaturesViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/TimelineScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/TimelineScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/TodosScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/TodosScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/user/DashboardScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/user/DashboardScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/user/TimelineScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/user/UserViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/user/UserViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../build_error.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../build_error.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../storage.rules" beforeDir="false" afterPath="$PROJECT_DIR$/../storage.rules" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
