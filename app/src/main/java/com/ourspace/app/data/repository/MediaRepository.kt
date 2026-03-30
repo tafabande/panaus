@@ -30,6 +30,16 @@ class MediaRepository {
             val downloadUrl = fileRef.downloadUrl.await().toString()
             
             Result.success(downloadUrl)
+        } catch (e: com.google.firebase.storage.StorageException) {
+            Log.e(TAG, "StorageException uploading media: HttpCode: ${e.httpResultCode}, ErrorCode: ${e.errorCode}, Message: ${e.message}", e)
+            val isAppCheckOrAuth = e.httpResultCode == 401 || e.httpResultCode == 403
+            val authStatus = if (com.google.firebase.auth.FirebaseAuth.getInstance().currentUser != null) "Logged IN" else "Logged OUT"
+            val customMessage = if (isAppCheckOrAuth) {
+                "Authentication rejected by Firebase (HTTP ${e.httpResultCode}). AuthState: $authStatus. If using physical device, verify App Check Debug Token is registered in Console."
+            } else {
+                "Upload failed: ${e.message}"
+            }
+            Result.failure(Exception(customMessage, e))
         } catch (e: Exception) {
             Log.e(TAG, "Failed to upload media to $folder/$fileName", e)
             Result.failure(e)

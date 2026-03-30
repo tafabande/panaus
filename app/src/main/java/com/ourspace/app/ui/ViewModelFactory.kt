@@ -16,7 +16,7 @@ class ViewModelFactory(
     private val featuresRepository: FeaturesRepository,
     private val authRepository: AuthRepository,
     private val musicRepository: com.ourspace.app.data.repository.MusicRepository = com.ourspace.app.data.repository.MusicRepository()
-) : ViewModelProvider.Factory {
+) : ViewModelProvider.AndroidViewModelFactory(application) {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -30,7 +30,7 @@ class ViewModelFactory(
             modelClass.isAssignableFrom(AuthViewModel::class.java) -> {
                 AuthViewModel(authRepository) as T
             }
-            else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+            else -> super.create(modelClass)
         }
     }
 }

@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.ourspace.app.data.model.UserProfile
 import com.ourspace.app.data.util.DateUtils
 import com.ourspace.app.ui.components.AuraDatePickerField
@@ -150,7 +151,10 @@ fun ProfileScreen(
                             .background(MaterialTheme.colorScheme.surfaceVariant)
                     ) {
                         AsyncImage(
-                            model = userProfile?.avatarUrl ?: "https://api.dicebear.com/7.x/thumbs/png?seed=${userProfile?.userId}",
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(userProfile?.avatarUrl ?: "https://api.dicebear.com/7.x/thumbs/png?seed=${userProfile?.userId}")
+                                .crossfade(true)
+                                .build(),
                             contentDescription = "Profile Picture",
                             modifier = Modifier
                                 .fillMaxSize()
@@ -196,7 +200,7 @@ fun ProfileScreen(
             AnimatedVisibility(visible = isEditMode) {
                 Column(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
                     SectionHeader("Customize Avatar")
-                    val avatars = listOf("Felix", "Aneka", "Abbie", "Milo", "Leo", "Sasha")
+                    val avatars = remember { listOf("Felix", "Aneka", "Abbie", "Milo", "Leo", "Sasha") }
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         contentPadding = PaddingValues(vertical = 8.dp)
@@ -211,14 +215,23 @@ fun ProfileScreen(
                                     .clickable { userViewModel.updateExtendedProfile(mapOf("avatarUrl" to url)) }
                                     .padding(4.dp)
                             ) {
-                                AsyncImage(model = url, contentDescription = seed, modifier = Modifier.fillMaxSize())
+                                AsyncImage(
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data(url)
+                                        .crossfade(true)
+                                        .build(), 
+                                    contentDescription = seed, 
+                                    modifier = Modifier.fillMaxSize()
+                                )
                             }
                         }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
                     SectionHeader("Profile Theme Color")
-                    val colorsList = listOf("#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEEAD", "#D4A5A5", "#9B59B6")
+                    val colorsList = remember { listOf("#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEEAD", "#D4A5A5", "#9B59B6") }
+                    val parsedColors = remember { colorsList.map { it to Color(android.graphics.Color.parseColor(it)) }.toMap() }
+                    
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         contentPadding = PaddingValues(vertical = 8.dp)
@@ -228,7 +241,7 @@ fun ProfileScreen(
                                 modifier = Modifier
                                     .size(40.dp)
                                     .clip(CircleShape)
-                                    .background(Color(android.graphics.Color.parseColor(hex)))
+                                    .background(parsedColors[hex] ?: Color.Gray)
                                     .border(
                                         BorderStroke(
                                             if (userProfile?.themeColor == hex) 3.dp else 0.dp,
