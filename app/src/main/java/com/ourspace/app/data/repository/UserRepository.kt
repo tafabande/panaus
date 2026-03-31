@@ -129,13 +129,13 @@ class UserRepository {
 
     private val mediaRepository = MediaRepository()
 
-    suspend fun uploadProfilePicture(userId: String, localUri: Uri): Result<String> = withContext(Dispatchers.IO) {
+    suspend fun uploadProfilePicture(context: android.content.Context, userId: String, localUri: Uri): Result<String> = withContext(Dispatchers.IO) {
         return@withContext try {
             val fileName = "pfp_${System.currentTimeMillis()}.jpg"
             val folder = "profiles/$userId"
             
             // Upload using MediaRepository
-            val uploadResult = mediaRepository.uploadMedia(folder, fileName, localUri)
+            val uploadResult = mediaRepository.uploadMedia(context, folder, fileName, localUri)
             if (uploadResult.isFailure) return@withContext Result.failure(uploadResult.exceptionOrNull()!!)
             
             val downloadUrl = uploadResult.getOrNull()!!

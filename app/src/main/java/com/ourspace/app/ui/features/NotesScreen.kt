@@ -236,7 +236,7 @@ fun NoteEditDialog(
             Column {
                 OutlinedTextField(
                     value = title,
-                    onValueChange = { title = it },
+                    onValueChange = { title = it.trim() },
                     label = { Text("Title") },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -274,7 +274,7 @@ fun NoteEditDialog(
         },
         confirmButton = {
             TextButton(onClick = {
-                onSave(note.copy(title = title, content = content, color = selectedColor, timestamp = System.currentTimeMillis()))
+                onSave(note.copy(title = title.trim(), content = content.trim(), color = selectedColor, timestamp = System.currentTimeMillis()))
             }) {
                 Text("Save", color = MaterialTheme.colorScheme.primary)
             }

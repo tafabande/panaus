@@ -102,7 +102,7 @@ fun LoginScreen(
 
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { email = it },
+                    onValueChange = { email = it.trim() },
                     label = { Text("Email or Username") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -151,7 +151,7 @@ fun LoginScreen(
                         } else {
                             sharedPrefs.edit().remove("saved_email").putBoolean("remember_me", false).apply()
                         }
-                        viewModel.login(email, password) 
+                        viewModel.login(email.trim(), password) 
                     },
                     modifier = Modifier
                         .fillMaxWidth()

@@ -27,6 +27,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.compose.runtime.mutableStateOf
@@ -74,15 +76,17 @@ class MainActivity : ComponentActivity() {
         // ComponentActivity 1.8.0+ enableEdgeToEdge already does this, but being explicit helps avoid "bezel" issues.
         try {
             FirebaseApp.initializeApp(this)
+
+            // ── Crashlytics ──────────────────────────────────────────────
+            FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled = !BuildConfig.DEBUG
+
+            // ── App Check ───────────────────────────────────────────────
             val firebaseAppCheck = FirebaseAppCheck.getInstance()
-            
             if (BuildConfig.DEBUG) {
                 firebaseAppCheck.installAppCheckProviderFactory(
                     DebugAppCheckProviderFactory.getInstance()
                 )
                 android.util.Log.d("MainActivity", "App Check: Installed Debug Provider.")
-                // IMPORTANT: The debug token is printed to Logcat by the DebugAppCheckProviderFactory.
-                // We'll add an extra log to remind the user to look for it.
                 android.util.Log.i("MainActivity", "------------------------------------------------------------")
                 android.util.Log.i("MainActivity", "APP CHECK DEBUG TOKEN: Look for 'Enter this debug secret into the allowed debug tokens' in Logcat!")
                 android.util.Log.i("MainActivity", "------------------------------------------------------------")
@@ -116,6 +120,9 @@ class MainActivity : ComponentActivity() {
                 android.util.Log.d("MainActivity", "TRACE: UserProfile changed. Is null: ${userProfile == null}, coupleId: ${userProfile?.coupleId}")
                 userProfile?.let {
                     featuresViewModel.startObserving(it)
+                    // Tag current user in Crashlytics & Analytics for better crash attribution
+                    FirebaseCrashlytics.getInstance().setUserId(it.userId)
+                    FirebaseAnalytics.getInstance(this@MainActivity).setUserId(it.userId)
                 } ?: featuresViewModel.stopObserving()
             }
 

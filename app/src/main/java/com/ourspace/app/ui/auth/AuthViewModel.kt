@@ -22,11 +22,12 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
 
     fun login(identifier: String, pass: String) {
         _authState.value = AuthState.Loading
+        val cleanId = identifier.trim()
         viewModelScope.launch {
-            val email = if (identifier.contains("@")) {
-                identifier
+            val email = if (cleanId.contains("@")) {
+                cleanId
             } else {
-                repository.getEmailByUsername(identifier)
+                repository.getEmailByUsername(cleanId)
             }
 
             if (email == null) {
@@ -46,13 +47,16 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
     }
 
     fun register(name: String, username: String, email: String, pass: String) {
-        if (name.isBlank() || username.isBlank() || email.isBlank() || pass.isBlank()) {
+        val cleanName = name.trim()
+        val cleanUsername = username.trim()
+        val cleanEmail = email.trim()
+        if (cleanName.isBlank() || cleanUsername.isBlank() || cleanEmail.isBlank() || pass.isBlank()) {
             _authState.value = AuthState.Error("All fields are required")
             return
         }
         _authState.value = AuthState.Loading
         viewModelScope.launch {
-            val result = repository.register(name, username, email, pass)
+            val result = repository.register(cleanName, cleanUsername, cleanEmail, pass)
             result.fold(
                 onSuccess = { _authState.value = AuthState.Success },
                 onFailure = { 

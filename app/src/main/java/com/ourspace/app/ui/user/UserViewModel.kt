@@ -190,7 +190,7 @@ class UserViewModel(application: Application, private val repository: UserReposi
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         viewModelScope.launch {
             _isSavingProfile.value = true
-            val result = repository.uploadProfilePicture(currentUserId, uri)
+            val result = repository.uploadProfilePicture(getApplication<Application>(), currentUserId, uri)
             result.onFailure { GlobalErrorHandler.recordException(it) }
             _isSavingProfile.value = false
         }

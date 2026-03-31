@@ -16,9 +16,10 @@ import java.util.Date
 import java.util.Locale
 
 class FeaturesViewModel(
+    application: android.app.Application,
     private val repository: FeaturesRepository,
     private val musicRepository: com.ourspace.app.data.repository.MusicRepository
-) : ViewModel() {
+) : androidx.lifecycle.AndroidViewModel(application) {
     
     private val _notes = MutableStateFlow<List<Note>>(emptyList())
     val notes: StateFlow<List<Note>> = _notes.asStateFlow()
@@ -216,7 +217,7 @@ class FeaturesViewModel(
         
         viewModelScope.launch {
             try {
-                repository.uploadMemory(coupleId, optimisticMemory, localUri)
+                repository.uploadMemory(getApplication<android.app.Application>(), coupleId, optimisticMemory, localUri)
                 // Success: remove from optimistic (Firestore listener will pick it up)
                 _optimisticMemories.value = _optimisticMemories.value.filter { it.id != tempId }
             } catch (e: Exception) {
@@ -417,7 +418,7 @@ class FeaturesViewModel(
         viewModelScope.launch {
             _isSavingProfile.value = true
             try {
-                repository.saveRelationshipEvent(coupleId, event, localUri)
+                repository.saveRelationshipEvent(getApplication<android.app.Application>(), coupleId, event, localUri)
             } catch (e: Exception) {
                 GlobalErrorHandler.recordException(e)
             }

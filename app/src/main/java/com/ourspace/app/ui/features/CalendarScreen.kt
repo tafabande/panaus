@@ -104,7 +104,7 @@ fun CalendarScreen(
                             
                             OutlinedTextField(
                                 value = title,
-                                onValueChange = { title = it },
+                                onValueChange = { title = it.trim() },
                                 label = { Text("Event Title") },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
@@ -131,7 +131,7 @@ fun CalendarScreen(
                             Spacer(modifier = Modifier.height(12.dp))
                             OutlinedTextField(
                                 value = category,
-                                onValueChange = { category = it },
+                                onValueChange = { category = it.trim() },
                                 label = { Text("Category") },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
@@ -157,10 +157,10 @@ fun CalendarScreen(
                                                 viewModel.addEvent(
                                                     coupleId = profile.coupleId ?: "",
                                                     creatorId = profile.userId,
-                                                    title = title,
+                                                    title = title.trim(),
                                                     date = selectedDate,
                                                     time = selectedTime,
-                                                    category = category
+                                                    category = category.trim()
                                                 )
                                                 title = ""
                                                 selectedTime = ""

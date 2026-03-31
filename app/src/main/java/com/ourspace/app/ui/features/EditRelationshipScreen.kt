@@ -80,8 +80,8 @@ fun EditRelationshipScreen(
                             if (title.isNotEmpty() && date.isNotEmpty()) {
                                 val event = RelationshipEvent(
                                     coupleId = coupleId,
-                                    title = title,
-                                    description = description,
+                                    title = title.trim(),
+                                    description = description.trim(),
                                     date = date,
                                     timestamp = System.currentTimeMillis()
                                 )
@@ -113,7 +113,7 @@ fun EditRelationshipScreen(
 
             OutlinedTextField(
                 value = title,
-                onValueChange = { title = it },
+                onValueChange = { title = it.trim() },
                 label = { Text("Event Name") },
                 placeholder = { Text("e.g., First Date, We moved in together") },
                 modifier = Modifier.fillMaxWidth(),
@@ -185,8 +185,8 @@ fun EditRelationshipScreen(
                     if (title.isNotEmpty() && date.isNotEmpty()) {
                         val event = RelationshipEvent(
                             coupleId = coupleId,
-                            title = title,
-                            description = description,
+                            title = title.trim(),
+                            description = description.trim(),
                             date = date,
                             timestamp = System.currentTimeMillis()
                         )

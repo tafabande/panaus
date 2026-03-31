@@ -86,7 +86,7 @@ fun RegisterScreen(
 
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it },
+                    onValueChange = { name = it.trim() },
                     label = { Text("Your Name") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -102,7 +102,7 @@ fun RegisterScreen(
 
                 OutlinedTextField(
                     value = username,
-                    onValueChange = { username = it },
+                    onValueChange = { username = it.trim() },
                     label = { Text("Username") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -118,7 +118,7 @@ fun RegisterScreen(
 
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { email = it },
+                    onValueChange = { email = it.trim() },
                     label = { Text("Email") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -148,7 +148,7 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Button(
-                    onClick = { viewModel.register(name, username, email, password) },
+                    onClick = { viewModel.register(name.trim(), username.trim(), email.trim(), password) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),

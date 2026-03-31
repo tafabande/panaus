@@ -85,7 +85,7 @@ fun TodosScreen(
                         Column(modifier = Modifier.padding(20.dp)) {
                             OutlinedTextField(
                                 value = title,
-                                onValueChange = { title = it },
+                                onValueChange = { title = it.trim() },
                                 label = { Text("Task") },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp)
@@ -135,7 +135,7 @@ fun TodosScreen(
                                             viewModel.addTodo(
                                                 coupleId = profile.coupleId ?: "",
                                                 creatorId = profile.userId,
-                                                title = title,
+                                                title = title.trim(),
                                                 assignedTo = assignedTo,
                                                 category = category
                                             )

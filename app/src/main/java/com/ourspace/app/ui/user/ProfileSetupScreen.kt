@@ -88,7 +88,7 @@ fun ProfileSetupScreen(
 
             OutlinedTextField(
                 value = name,
-                onValueChange = { name = it },
+                onValueChange = { name = it.trim() },
                 label = { Text("Full Name (Required)") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -130,7 +130,7 @@ fun ProfileSetupScreen(
 
             OutlinedTextField(
                 value = nickname,
-                onValueChange = { nickname = it },
+                onValueChange = { nickname = it.trim() },
                 label = { Text("Nickname (Optional)") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -140,7 +140,7 @@ fun ProfileSetupScreen(
 
             OutlinedTextField(
                 value = statusText,
-                onValueChange = { statusText = it },
+                onValueChange = { statusText = it.trim() },
                 label = { Text("Current Aura/Status (Optional)") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -207,7 +207,7 @@ fun ProfileSetupScreen(
 
             OutlinedTextField(
                 value = firstDateLocation,
-                onValueChange = { firstDateLocation = it },
+                onValueChange = { firstDateLocation = it.trim() },
                 label = { Text("Where was your first date?") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -274,16 +274,16 @@ fun ProfileSetupScreen(
             Button(
                 onClick = {
                     val updates = mapOf(
-                        "name" to name,
+                        "name" to name.trim(),
                         "gender" to gender,
-                        "nickname" to nickname,
-                        "statusText" to statusText,
+                        "nickname" to nickname.trim(),
+                        "statusText" to statusText.trim(),
                         "birthday" to birthday,
                         "anniversary" to anniversary,
-                        "favoriteSongs" to favoriteSong,
-                        "firstDateLocation" to firstDateLocation,
+                        "favoriteSongs" to favoriteSong.trim(),
+                        "firstDateLocation" to firstDateLocation.trim(),
                         "firstKissDate" to firstKissDate,
-                        "howWeMet" to howWeMet,
+                        "howWeMet" to howWeMet.trim(),
                         "profileTheme" to selectedTheme,
                         "isSetupComplete" to true
                     )

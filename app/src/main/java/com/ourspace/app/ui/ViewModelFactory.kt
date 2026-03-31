@@ -25,7 +25,7 @@ class ViewModelFactory(
                 UserViewModel(application, userRepository) as T
             }
             modelClass.isAssignableFrom(FeaturesViewModel::class.java) -> {
-                FeaturesViewModel(featuresRepository, musicRepository) as T
+                FeaturesViewModel(application, featuresRepository, musicRepository) as T
             }
             modelClass.isAssignableFrom(AuthViewModel::class.java) -> {
                 AuthViewModel(authRepository) as T

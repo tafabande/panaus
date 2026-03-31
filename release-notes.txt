@@ -1,0 +1,4 @@
+- Initial beta release of OurSpace (Aura Amour)
+- Profile picture uploads and partner pairing
+- Timeline, memories, milestones, notes and calendar features
+- Dark-mode UI with Firebase Authentication & Firestore

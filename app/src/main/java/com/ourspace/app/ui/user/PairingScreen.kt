@@ -255,7 +255,7 @@ fun PairingScreen(
                     value = searchQuery,
                     onValueChange = { 
                         searchQuery = it
-                        viewModel.performSearch(it)
+                        viewModel.performSearch(it.trim())
                     },
                     label = { Text("Search by Name or Email") },
                     modifier = Modifier.fillMaxWidth(),
@@ -305,7 +305,7 @@ fun PairingScreen(
 
                 OutlinedTextField(
                     value = partnerCode,
-                    onValueChange = { partnerCode = it },
+                    onValueChange = { partnerCode = it.trim() },
                     label = { Text("Partner's Code") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -320,7 +320,7 @@ fun PairingScreen(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 Button(
-                    onClick = { viewModel.pairWithPartner(partnerCode) },
+                    onClick = { viewModel.pairWithPartner(partnerCode.trim()) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),

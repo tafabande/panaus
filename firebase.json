@@ -26,5 +26,10 @@
   },
   "storage": {
     "rules": "storage.rules"
+  },
+  "app_distribution": {
+    "app": "1:696531395092:android:4b0a901a42c51665ba7d01",
+    "testers": "bleighbande@gmail.com",
+    "releaseNotes": "release-notes.txt"
   }
 }

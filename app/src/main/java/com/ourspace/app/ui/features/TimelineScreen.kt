@@ -183,7 +183,7 @@ fun TimelineScreen(
                             userProfile.coupleId ?: "",
                             userProfile.userId,
                             pendingUri!!,
-                            captionText
+                            captionText.trim()
                         )
                     }
                     showCaptionDialog = false

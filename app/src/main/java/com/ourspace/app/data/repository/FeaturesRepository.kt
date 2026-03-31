@@ -229,13 +229,13 @@ class FeaturesRepository {
 
     private val mediaRepository = MediaRepository()
 
-    suspend fun uploadMemory(coupleId: String, memory: Memory, localUri: android.net.Uri) = withContext(Dispatchers.IO) {
+    suspend fun uploadMemory(context: android.content.Context, coupleId: String, memory: Memory, localUri: android.net.Uri) = withContext(Dispatchers.IO) {
         try {
             val folder = if (coupleId.isNotBlank()) "memories/$coupleId" else "memories/${memory.userId}"
             val fileName = "${System.currentTimeMillis()}.jpg"
             
             // Upload using MediaRepository
-            val uploadResult = mediaRepository.uploadMedia(folder, fileName, localUri)
+            val uploadResult = mediaRepository.uploadMedia(context, folder, fileName, localUri)
             if (uploadResult.isFailure) {
                 throw uploadResult.exceptionOrNull()!!
             }
@@ -330,13 +330,13 @@ class FeaturesRepository {
         awaitClose { listener.remove() }
     }
 
-    suspend fun saveRelationshipEvent(coupleId: String, event: RelationshipEvent, localUri: android.net.Uri? = null) = withContext(Dispatchers.IO) {
+    suspend fun saveRelationshipEvent(context: android.content.Context, coupleId: String, event: RelationshipEvent, localUri: android.net.Uri? = null) = withContext(Dispatchers.IO) {
         var finalEvent = event
         
         if (localUri != null) {
             val folder = "milestones/$coupleId"
             val fileName = "milestone_${System.currentTimeMillis()}.jpg"
-            val uploadResult = mediaRepository.uploadMedia(folder, fileName, localUri)
+            val uploadResult = mediaRepository.uploadMedia(context, folder, fileName, localUri)
             if (uploadResult.isSuccess) {
                 finalEvent = finalEvent.copy(imageUrl = uploadResult.getOrNull()!!)
             } else {

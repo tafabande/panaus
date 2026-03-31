@@ -201,7 +201,7 @@ fun MemoriesScreen(
             confirmButton = {
                 TextButton(onClick = {
                     if (userProfile != null && pendingUri != null) {
-                        viewModel.uploadMemory(userProfile.coupleId ?: "", userProfile.userId, pendingUri!!, captionText)
+                        viewModel.uploadMemory(userProfile.coupleId ?: "", userProfile.userId, pendingUri!!, captionText.trim())
                     }
                     showCaptionDialog = false
                     pendingUri = null
