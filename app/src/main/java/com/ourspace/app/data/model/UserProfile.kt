@@ -40,6 +40,8 @@ data class UserProfile(
     val howWeMet: String? = null,
     @get:PropertyName("profileTheme") @set:PropertyName("profileTheme")
     var profileTheme: String? = null, // Theme color name (e.g., "Teal")
-    val themeColor: String? = null // Hex color override
-
+    val themeColor: String? = null, // Hex color override
+    val relationshipType: String? = null, // "ROMANTIC", "PARENT_CHILD", "FLATMATE", "FRIEND"
+    val statusEmoji: String? = null,
+    val statusNote: String? = null
 )

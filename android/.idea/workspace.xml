@@ -5,20 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7d97a845-63c2-437c-994e-39bd76d65c89" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/data/model/Features.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/data/model/Features.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/data/repository/FeaturesRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/data/repository/FeaturesRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/data/model/UserProfile.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/data/model/UserProfile.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/data/repository/UserRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/data/repository/UserRepository.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/MainScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/MainScreen.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/AsksScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/AsksScreen.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/EditRelationshipScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/EditRelationshipScreen.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/FeaturesViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/FeaturesViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/ViewModelFactory.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/ViewModelFactory.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/TimelineScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/TimelineScreen.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/TodosScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/features/TodosScreen.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/user/DashboardScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/user/DashboardScreen.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/user/TimelineScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/user/PairingScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/user/PairingScreen.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/user/UserViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app/src/main/java/com/ourspace/app/ui/user/UserViewModel.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../build_error.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../build_error.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../storage.rules" beforeDir="false" afterPath="$PROJECT_DIR$/../storage.rules" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -127,46 +121,46 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Android App.app.executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.Configure Daemon JVM Criteria.executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.android [testClasses].executor&quot;: &quot;Coverage&quot;,
-    &quot;GradleDaemonJvmCriteriaMigrationNotification.isNotificationDisabled&quot;: &quot;true&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;android.gradle.sync.needed&quot;: &quot;true&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;com.google.services.firebase.aqiPopupShown&quot;: &quot;true&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/User/Desktop/us/android&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Suggestions&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.17&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;gradle.compiler&quot;,
-    &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Android App.app.executor": "Run",
+    "Gradle.Configure Daemon JVM Criteria.executor": "Run",
+    "Gradle.android [testClasses].executor": "Coverage",
+    "GradleDaemonJvmCriteriaMigrationNotification.isNotificationDisabled": "true",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "android.gradle.sync.needed": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "com.google.services.firebase.aqiPopupShown": "true",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "dart.analysis.tool.window.visible": "false",
+    "git-widget-placeholder": "expansion",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/User/Desktop/us/android",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Suggestions",
+    "project.structure.proportion": "0.17",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "gradle.compiler",
+    "show.migrate.to.gradle.popup": "false",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="PsdUISettings">
     <option name="LAST_EDITED_BUILD_TYPE" value="release" />
   </component>
-  <component name="RunManager" selected="Android App.app">
+  <component name="RunManager" selected="Gradle.android [testClasses]">
     <configuration name="app" type="AndroidRunConfigurationType" factoryName="Android App" activateToolWindowBeforeRun="false">
       <module name="android.app" />
       <option name="ANDROID_RUN_CONFIGURATION_SCHEMA_VERSION" value="1" />
@@ -257,15 +251,12 @@
       </ExternalSystemSettings>
       <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
       <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
-      <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
       <EXTENSION ID="com.android.tools.idea.testartifacts.testsuite.GradleRunConfigurationExtension">
         <com.android.tools.idea.testartifacts.testsuite.SHOW_TEST_RESULT_IN_ANDROID_TEST_SUITE_VIEW>false</com.android.tools.idea.testartifacts.testsuite.SHOW_TEST_RESULT_IN_ANDROID_TEST_SUITE_VIEW>
         <android.execution.deploysToLocalDevice>false</android.execution.deploysToLocalDevice>
       </EXTENSION>
       <DebugAllEnabled>false</DebugAllEnabled>
       <RunAsTest>false</RunAsTest>
-      <GradleProfilingDisabled>false</GradleProfilingDisabled>
-      <GradleCoverageDisabled>false</GradleCoverageDisabled>
       <method v="2" />
     </configuration>
     <recent_temporary>
@@ -292,6 +283,7 @@
       <workItem from="1774206207821" duration="1210000" />
       <workItem from="1774261921623" duration="802000" />
       <workItem from="1774285220653" duration="185000" />
+      <workItem from="1775038578922" duration="21000" />
     </task>
     <servers />
   </component>

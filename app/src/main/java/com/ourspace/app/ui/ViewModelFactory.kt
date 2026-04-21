@@ -22,7 +22,7 @@ class ViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
             modelClass.isAssignableFrom(UserViewModel::class.java) -> {
-                UserViewModel(application, userRepository) as T
+                UserViewModel(application, userRepository, featuresRepository) as T
             }
             modelClass.isAssignableFrom(FeaturesViewModel::class.java) -> {
                 FeaturesViewModel(application, featuresRepository, musicRepository) as T

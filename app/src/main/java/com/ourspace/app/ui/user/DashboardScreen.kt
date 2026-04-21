@@ -16,7 +16,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -75,12 +80,27 @@ fun DashboardScreen(
                 .verticalScroll(scrollState)
         ) {
         if (userProfile == null) {
-            LinearProgressIndicator(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                trackColor = Color.Transparent
-            )
-        }
+            Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                com.ourspace.app.ui.components.SkeletonLoader(
+                    modifier = Modifier.fillMaxWidth().height(80.dp),
+                    shape = RoundedCornerShape(24.dp)
+                )
+                com.ourspace.app.ui.components.SkeletonLoader(
+                    modifier = Modifier.fillMaxWidth().height(140.dp),
+                    shape = RoundedCornerShape(24.dp)
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    com.ourspace.app.ui.components.SkeletonLoader(
+                        modifier = Modifier.weight(1f).height(140.dp),
+                        shape = RoundedCornerShape(24.dp)
+                    )
+                    com.ourspace.app.ui.components.SkeletonLoader(
+                        modifier = Modifier.weight(1f).height(140.dp),
+                        shape = RoundedCornerShape(24.dp)
+                    )
+                }
+            }
+        } else {
         // App Top Bar / Header
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp, top = 8.dp),
@@ -134,19 +154,122 @@ fun DashboardScreen(
             }
         }
 
+        // Quick Status Update Feature
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp)
+                .clip(RoundedCornerShape(32.dp))
+                .background(MaterialTheme.colorScheme.surface) // Blending surface
+        ) {
+            var showStatusDialog by remember { mutableStateOf(false) }
+            val currentEmoji = userProfile?.statusEmoji ?: "😊"
+            val currentNote = userProfile?.statusNote ?: "How are you feeling?"
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showStatusDialog = true }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(currentEmoji, style = MaterialTheme.typography.headlineSmall)
+                    }
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Quick Status",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = currentNote,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                }
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = "Edit Status",
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            if (showStatusDialog) {
+                var emoji by remember { mutableStateOf(currentEmoji) }
+                var note by remember { mutableStateOf(if (currentNote == "How are you feeling?") "" else currentNote) }
+
+                AlertDialog(
+                    onDismissRequest = { showStatusDialog = false },
+                    title = { Text("Update Current Status") },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            // Simple Emoji Picker Row
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                listOf("😊", "🤒", "😴", "🍕", "💻", "🏃").forEach { e ->
+                                    Surface(
+                                        onClick = { emoji = e },
+                                        shape = CircleShape,
+                                        color = if (emoji == e) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                                        modifier = Modifier.size(40.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Text(e, fontSize = 20.sp)
+                                        }
+                                    }
+                                }
+                            }
+                            OutlinedTextField(
+                                value = note,
+                                onValueChange = { note = it },
+                                label = { Text("What's up?") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        Button(onClick = {
+                            userViewModel.updateQuickStatus(emoji, note.ifBlank { "Feeling good!" })
+                            showStatusDialog = false
+                        }) {
+                            Text("Update")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showStatusDialog = false }) {
+                            Text("Cancel")
+                        }
+                    }
+                )
+            }
+        }
+
         // Split Mood/Status View
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             // My Status
-            Card(
+            Box(
                 modifier = Modifier
                     .weight(1f)
                     .height(140.dp)
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(MaterialTheme.colorScheme.surface)
                     .clickable { 
                         Log.d("DashboardScreen", "Navigating to Mood")
                         onNavigateToMood() 
-                    },
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    }
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     val moodText = userProfile?.mood ?: "Peaceful"
@@ -158,11 +281,13 @@ fun DashboardScreen(
                 }
             }
 
-            // Their Status
-            Card(
-                modifier = Modifier.weight(1f).height(140.dp),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
+            // Their Status & Interactions
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(140.dp)
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)) // Distinct but soft
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     val partnerMood = partnerProfile?.mood ?: "Joyful"
@@ -280,17 +405,17 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
         
-        // Aura Memories / Journey Card
-        Card(
+        // Aura Memories / Journey
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(160.dp)
+                .clip(RoundedCornerShape(32.dp))
+                .background(MaterialTheme.colorScheme.surface)
                 .clickable { 
                     Log.d("DashboardScreen", "Navigating to Memories")
                     onNavigateToMemories() 
-                },
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
+                }
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 // Background decor
@@ -341,10 +466,11 @@ fun DashboardScreen(
         Text("Our Recent Days", fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurface, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
         
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(32.dp))
+                .background(MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 val recentInteractions = interactions
@@ -366,6 +492,7 @@ fun DashboardScreen(
                                 "poke" -> MaterialTheme.colorScheme.primary
                                 "hug" -> MaterialTheme.colorScheme.secondary
                                 "kiss" -> MaterialTheme.colorScheme.tertiary
+                                "status_update" -> MaterialTheme.colorScheme.outline
                                 else -> MaterialTheme.colorScheme.primary
                             }
                             Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(color))
@@ -376,6 +503,7 @@ fun DashboardScreen(
                                     "poke" -> "sent you a poke 👉"
                                     "hug" -> "sent you a hug 🤗"
                                     "kiss" -> "sent you a kiss 💋"
+                                    "status_update" -> "updated their status 📝"
                                     else -> "interacted with you"
                                 }
                                 Text("$partnerName $action", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
@@ -426,6 +554,7 @@ fun DashboardScreen(
         Spacer(modifier = Modifier.height(24.dp))
         
         Spacer(modifier = Modifier.height(100.dp)) // NavBar cushion
+        } // End of conditional `else` rendering user content
     }
 
     if (isBirthday || isAnniversary) {

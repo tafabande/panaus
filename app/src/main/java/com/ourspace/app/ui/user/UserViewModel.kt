@@ -8,6 +8,9 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.ourspace.app.data.model.UserProfile
 import com.ourspace.app.data.repository.UserRepository
+import com.ourspace.app.data.repository.FeaturesRepository
+import com.ourspace.app.data.model.Interaction
+import com.ourspace.app.data.model.RelationshipType
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,11 +30,16 @@ sealed class PairingState {
     object Loading : PairingState()
     object Success : PairingState()
     data class RequestSent(val toCode: String) : PairingState()
-    data class ReceivingRequest(val fromId: String, val fromName: String) : PairingState()
+    data class ReceivingRequest(val fromId: String, val fromName: String, val fromType: String? = null) : PairingState()
+    data class MismatchedType(val fromId: String, val fromType: String, val toType: String) : PairingState()
     data class Error(val message: String) : PairingState()
 }
 
-class UserViewModel(application: Application, private val repository: UserRepository) : AndroidViewModel(application) {
+class UserViewModel(
+    application: Application, 
+    private val repository: UserRepository,
+    private val featuresRepository: FeaturesRepository
+) : AndroidViewModel(application) {
     private val prefs = application.getSharedPreferences("honeybee_prefs", Context.MODE_PRIVATE)
 
     private val _themePreference = MutableStateFlow(prefs.getString("theme_pref", "SYSTEM") ?: "SYSTEM")
@@ -48,6 +56,9 @@ class UserViewModel(application: Application, private val repository: UserReposi
 
     private val _hasSkippedPairing = MutableStateFlow(false)
     val hasSkippedPairing: StateFlow<Boolean> = _hasSkippedPairing.asStateFlow()
+
+    private val _selectedRelationshipType = MutableStateFlow(RelationshipType.ROMANTIC)
+    val selectedRelationshipType: StateFlow<RelationshipType> = _selectedRelationshipType.asStateFlow()
 
     private var observerJob: Job? = null
     private var partnerObserverJob: Job? = null
@@ -101,8 +112,15 @@ class UserViewModel(application: Application, private val repository: UserReposi
                 .collectLatest { request ->
                     if (request != null && _pairingState.value !is PairingState.Loading) {
                         val fromId = request["fromId"] as? String ?: return@collectLatest
-                        // In a real app, you might fetch the seeker's name here
-                        _pairingState.value = PairingState.ReceivingRequest(fromId, "Someone")
+                        val status = request["status"] as? String
+                        val fromType = request["fromRelationshipType"] as? String
+                        val toType = request["toRelationshipType"] as? String
+                        
+                        if (status == "MISMATCH" && fromType != null && toType != null) {
+                            _pairingState.value = PairingState.MismatchedType(fromId, fromType, toType)
+                        } else {
+                            _pairingState.value = PairingState.ReceivingRequest(fromId, "Someone", fromType)
+                        }
                     }
                 }
         }
@@ -126,7 +144,7 @@ class UserViewModel(application: Application, private val repository: UserReposi
         
         _pairingState.value = PairingState.Loading
         viewModelScope.launch {
-            val result = repository.sendPairingRequest(currentUserId, partnerCode)
+            val result = repository.sendPairingRequest(currentUserId, partnerCode, _selectedRelationshipType.value.name)
             result.fold(
                 onSuccess = { _pairingState.value = PairingState.RequestSent(partnerCode) },
                 onFailure = { _pairingState.value = PairingState.Error(it.message ?: "Request failed") }
@@ -138,7 +156,7 @@ class UserViewModel(application: Application, private val repository: UserReposi
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         _pairingState.value = PairingState.Loading
         viewModelScope.launch {
-            val result = repository.acceptPairingRequest(fromId, currentUserId)
+            val result = repository.acceptPairingRequest(fromId, currentUserId, _selectedRelationshipType.value.name)
             result.fold(
                 onSuccess = { _pairingState.value = PairingState.Success },
                 onFailure = { _pairingState.value = PairingState.Error(it.message ?: "Acceptance failed") }
@@ -156,6 +174,10 @@ class UserViewModel(application: Application, private val repository: UserReposi
 
     fun skipPairing() {
         _hasSkippedPairing.value = true
+    }
+
+    fun setSelectedRelationshipType(type: RelationshipType) {
+        _selectedRelationshipType.value = type
     }
 
     fun resetPairingState() {
@@ -236,10 +258,32 @@ class UserViewModel(application: Application, private val repository: UserReposi
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         _pairingState.value = PairingState.Loading
         viewModelScope.launch {
-            repository.sendPairingRequestById(currentUserId, partnerId).fold(
+            repository.sendPairingRequestById(currentUserId, partnerId, _selectedRelationshipType.value.name).fold(
                 onSuccess = { _ -> _pairingState.value = PairingState.RequestSent("User found via search") },
                 onFailure = { error -> _pairingState.value = PairingState.Error(error.message ?: "Failed to send request") }
             )
+        }
+    }
+
+    fun updateQuickStatus(emoji: String, note: String) {
+        val user = _userProfile.value ?: return
+        val currentUserId = user.userId
+        val coupleId = user.coupleId ?: return
+
+        viewModelScope.launch {
+            val result = repository.updateQuickStatus(currentUserId, emoji, note)
+            result.onSuccess {
+                GlobalErrorHandler.showMessage("Status updated: $emoji")
+                // Send interaction notification to partner
+                featuresRepository.sendInteraction(coupleId, Interaction(
+                    coupleId = coupleId,
+                    senderId = currentUserId,
+                    type = "status_update",
+                    timestamp = System.currentTimeMillis()
+                ))
+            }.onFailure {
+                GlobalErrorHandler.recordException(it)
+            }
         }
     }
 

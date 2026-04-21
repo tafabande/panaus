@@ -3,10 +3,18 @@ package com.ourspace.app.ui.theme
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
@@ -54,10 +62,39 @@ private val LightColorScheme = lightColorScheme(
     outline = outlineLight
 )
 
+// Defining extremely soft shapes for fluid UI
+val LiquidShapes = Shapes(
+    small = RoundedCornerShape(16.dp),
+    medium = RoundedCornerShape(24.dp),
+    large = RoundedCornerShape(32.dp)
+)
+
+// Natural, clean typography
+val AppTypography = Typography(
+    headlineLarge = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Light,
+        fontSize = 32.sp,
+        letterSpacing = 0.sp
+    ),
+    titleLarge = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Normal,
+        fontSize = 22.sp,
+        letterSpacing = 0.sp
+    ),
+    bodyLarge = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp,
+        letterSpacing = 0.5.sp
+    )
+)
+
 @Composable
 fun OurSpaceTheme(
     themePreference: String = "SYSTEM",
-    dynamicColor: Boolean = false, // Set to true to allow dynamic theming on Android 12+
+    dynamicColor: Boolean = true, // Force dynamic color preference where possible to support natural look
     content: @Composable () -> Unit
 ) {
     val darkTheme = when (themePreference) {
@@ -77,7 +114,8 @@ fun OurSpaceTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        // Using default typography here, can expand later
+        typography = AppTypography,
+        shapes = LiquidShapes,
         content = content
     )
 }

@@ -319,5 +319,5 @@ fun getItemTitle(item: TimelineItem): String = when (item) {
 fun getItemDescription(item: TimelineItem): String = when (item) {
     is TimelineItem.Relationship -> item.event.description
     is TimelineItem.Photo -> ""
-    is TimelineItem.Anniversary -> "Happy Anniversary!"
+    is TimelineItem.Anniversary -> "Celebrating our milestone!"
 }

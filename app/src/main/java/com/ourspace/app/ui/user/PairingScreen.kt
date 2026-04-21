@@ -11,6 +11,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import com.ourspace.app.data.model.RelationshipType
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,7 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun PairingScreen(
     onLogout: () -> Unit,
@@ -124,7 +129,8 @@ fun PairingScreen(
                         ) {
                             Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text("New Connection Request!", fontWeight = FontWeight.Bold, color = Color(0xFF166534))
-                                Text("Someone wants to pair with you.", fontSize = 12.sp, color = Color(0xFF166534))
+                                val typeLabel = state.fromType?.let { "as ${it.lowercase()}" } ?: ""
+                                Text("Someone wants to pair with you $typeLabel.", fontSize = 12.sp, color = Color(0xFF166534))
                                 Spacer(Modifier.height(12.dp))
                                 Button(
                                     onClick = { viewModel.acceptRequest(state.fromId) },
@@ -132,6 +138,30 @@ fun PairingScreen(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text("Accept & Connect")
+                                }
+                            }
+                        }
+                    }
+                    is PairingState.MismatchedType -> {
+                        Card(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7ED)), // orange-50
+                            shape = RoundedCornerShape(16.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFED7AA))
+                        ) {
+                            Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("Relationship Mismatch", fontWeight = FontWeight.Bold, color = Color(0xFF9A3412))
+                                Text("You selected ${state.toType}, but they selected ${state.fromType}.", fontSize = 12.sp, color = Color(0xFF9A3412), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                                Spacer(Modifier.height(12.dp))
+                                Button(
+                                    onClick = { viewModel.acceptRequest(state.fromId) },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF97316)),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Confirm ${viewModel.selectedRelationshipType.collectAsState().value.displayName} Selection")
+                                }
+                                TextButton(onClick = { viewModel.resetPairingState() }) {
+                                    Text("Cancel", color = Color(0xFF9A3412))
                                 }
                             }
                         }
@@ -300,22 +330,50 @@ fun PairingScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Text(text = "OR USE CODE", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = partnerCode,
-                    onValueChange = { partnerCode = it.trim() },
-                    label = { Text("Partner's Code") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color(0xFF1E293B),
-                        unfocusedTextColor = Color(0xFF1E293B),
-                        focusedBorderColor = Color(0xFFF43F5E),
-                        unfocusedBorderColor = Color.DarkGray
-                    )
+                Text(
+                    text = "SELECT RELATIONSHIP TYPE",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF64748B),
+                    letterSpacing = 1.sp,
+                    modifier = Modifier.align(Alignment.Start).padding(start = 4.dp, bottom = 8.dp)
                 )
+
+                val selectedType by viewModel.selectedRelationshipType.collectAsState()
+                
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    com.ourspace.app.data.model.RelationshipType.values().forEach { type ->
+                        val isSelected = selectedType == type
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { viewModel.setSelectedRelationshipType(type) },
+                            label = { Text(type.displayName) },
+                            leadingIcon = { 
+                                Icon(
+                                    imageVector = type.getIcon(), 
+                                    contentDescription = null, 
+                                    modifier = Modifier.size(18.dp)
+                                ) 
+                            },
+                            enabled = true,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Color(0xFFF43F5E).copy(alpha = 0.1f),
+                                selectedLabelColor = Color(0xFFF43F5E),
+                                selectedLeadingIconColor = Color(0xFFF43F5E)
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = isSelected,
+                                borderColor = if (isSelected) Color(0xFFF43F5E) else Color(0xFFE2E8F0),
+                                borderWidth = 1.dp
+                            )
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(32.dp))
 

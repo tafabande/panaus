@@ -172,7 +172,7 @@ class UserRepository {
         }
     }
 
-    suspend fun sendPairingRequest(fromUserId: String, toPartnerCode: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun sendPairingRequest(fromUserId: String, toPartnerCode: String, relationshipType: String): Result<Unit> = withContext(Dispatchers.IO) {
         return@withContext try {
             // 1. Find the partner by code
             val partnerQuery = db.collection("users")
@@ -196,6 +196,7 @@ class UserRepository {
             val requestData = hashMapOf(
                 "fromId" to fromUserId,
                 "toId" to partnerId,
+                "fromRelationshipType" to relationshipType,
                 "status" to "PENDING",
                 "createdAt" to DateUtils.getCurrentIsoTime()
             )
@@ -226,9 +227,22 @@ class UserRepository {
         awaitClose { incomingListener.remove() }
     }
 
-    suspend fun acceptPairingRequest(fromId: String, toId: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun acceptPairingRequest(fromId: String, toId: String, acceptorRelationshipType: String): Result<Unit> = withContext(Dispatchers.IO) {
         return@withContext try {
             val requestId = listOf(fromId, toId).sorted().joinToString("_")
+            val requestSnap = db.collection("pairingRequests").document(requestId).get().await()
+            
+            val senderRelationshipType = requestSnap.getString("fromRelationshipType")
+            
+            if (senderRelationshipType != acceptorRelationshipType) {
+                // MISMATCH
+                db.collection("pairingRequests").document(requestId).update(
+                    "status", "MISMATCH",
+                    "toRelationshipType", acceptorRelationshipType
+                ).await()
+                return@withContext Result.failure(Exception("Relationship type mismatch! Both users must select the same type."))
+            }
+
             val coupleId = requestId // Same ID for simplicity
 
             val batch = db.batch()
@@ -241,13 +255,22 @@ class UserRepository {
                 "coupleId" to coupleId,
                 "user1Id" to fromId,
                 "user2Id" to toId,
+                "relationshipType" to acceptorRelationshipType,
                 "createdAt" to DateUtils.getCurrentIsoTime()
             )
             batch.set(db.collection("couples").document(coupleId), coupleData)
             
             // 3. Update users
-            batch.update(db.collection("users").document(fromId), mapOf("partnerId" to toId, "coupleId" to coupleId))
-            batch.update(db.collection("users").document(toId), mapOf("partnerId" to fromId, "coupleId" to coupleId))
+            batch.update(db.collection("users").document(fromId), mapOf(
+                "partnerId" to toId, 
+                "coupleId" to coupleId,
+                "relationshipType" to acceptorRelationshipType
+            ))
+            batch.update(db.collection("users").document(toId), mapOf(
+                "partnerId" to fromId, 
+                "coupleId" to coupleId,
+                "relationshipType" to acceptorRelationshipType
+            ))
             
             batch.commit().await()
             Result.success(Unit)
@@ -278,16 +301,29 @@ class UserRepository {
         }
     }
 
-    suspend fun sendPairingRequestById(fromUserId: String, partnerId: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun sendPairingRequestById(fromUserId: String, partnerId: String, relationshipType: String): Result<Unit> = withContext(Dispatchers.IO) {
         return@withContext try {
             val requestId = listOf(fromUserId, partnerId).sorted().joinToString("_")
             val requestData = hashMapOf(
                 "fromId" to fromUserId,
                 "toId" to partnerId,
+                "fromRelationshipType" to relationshipType,
                 "status" to "PENDING",
                 "createdAt" to DateUtils.getCurrentIsoTime()
             )
             db.collection("pairingRequests").document(requestId).set(requestData).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateQuickStatus(userId: String, emoji: String, note: String): Result<Unit> = withContext(Dispatchers.IO) {
+        return@withContext try {
+            db.collection("users").document(userId).update(
+                "statusEmoji", emoji,
+                "statusNote", note.trim()
+            ).await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

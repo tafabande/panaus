@@ -77,6 +77,12 @@ class MainActivity : ComponentActivity() {
         try {
             FirebaseApp.initializeApp(this)
 
+            // ── Offline Persistence ──────────────────────────────────────
+            val settings = com.google.firebase.firestore.FirebaseFirestoreSettings.Builder()
+                .setPersistenceEnabled(true)
+                .build()
+            com.google.firebase.firestore.FirebaseFirestore.getInstance().firestoreSettings = settings
+
             // ── Crashlytics ──────────────────────────────────────────────
             FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled = !BuildConfig.DEBUG
 

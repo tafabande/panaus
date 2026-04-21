@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 
 sealed class BottomNavItem(var title: String, var icon: androidx.compose.ui.graphics.vector.ImageVector, var route: String) {
     object Home : BottomNavItem("Home", Icons.Default.FavoriteBorder, "home")
+    object Discover : BottomNavItem("Discover", Icons.Default.Search, "discover")
     object Notes : BottomNavItem("Notes", Icons.Default.Email, "notes")
     object Calendar : BottomNavItem("Calendar", Icons.Default.DateRange, "calendar")
     object Game : BottomNavItem("Play", Icons.Default.Star, "game")
@@ -39,14 +40,26 @@ fun MainScreen(
     val navController = rememberNavController()
     val snackbarHostState = remember { SnackbarHostState() }
     
-    val items = listOf(
-        BottomNavItem.Home,
-        BottomNavItem.Notes,
-        BottomNavItem.Calendar,
-        BottomNavItem.Game,
-        BottomNavItem.Timeline,
-        BottomNavItem.Profile
-    )
+    val items = remember(userProfile) {
+        val baseItems = mutableListOf<BottomNavItem>()
+        baseItems.add(BottomNavItem.Home)
+        
+        if (userProfile?.partnerId == null) {
+            // Single User Layout
+            baseItems.add(BottomNavItem.Discover)
+            baseItems.add(BottomNavItem.Notes) // Basic feature access
+        } else {
+            // Coupled User Layout
+            baseItems.add(BottomNavItem.Notes)
+            baseItems.add(BottomNavItem.Calendar)
+            baseItems.add(BottomNavItem.Timeline)
+            if (userProfile.relationshipType == "ROMANTIC") {
+                baseItems.add(BottomNavItem.Game)
+            }
+        }
+        baseItems.add(BottomNavItem.Profile)
+        baseItems
+    }
 
     // Global Error Listener
     LaunchedEffect(Unit) {
@@ -120,6 +133,12 @@ fun MainScreen(
                     onNavigateToMood = { navController.navigate("mood") },
                     onNavigateToMemories = { navController.navigate("memories") },
                     profileTheme = AuraColors.fromName(userProfile?.profileTheme)
+                )
+            }
+            composable(BottomNavItem.Discover.route) {
+                DiscoverScreen(
+                    userProfile = userProfile,
+                    viewModel = featuresViewModel
                 )
             }
             composable(BottomNavItem.Notes.route) {

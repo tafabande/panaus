@@ -2,7 +2,7 @@ plugins {
     id 'com.android.application' version '8.7.3'
     id 'org.jetbrains.kotlin.android' version '2.2.0'
     id 'org.jetbrains.kotlin.plugin.compose' version '2.2.0'
-    id 'com.google.firebase.appdistribution'
+    // id 'com.google.firebase.appdistribution'
     id 'com.google.firebase.crashlytics'
     id 'com.google.firebase.firebase-perf'
 }
@@ -33,21 +33,21 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 
             // ── Firebase App Distribution ────────────────────────────
-            firebaseAppDistribution {
+            /*firebaseAppDistribution {
                 // Path to a plain-text release notes file (one line per note)
                 releaseNotesFile = "release-notes.txt"
                 // Comma-separated tester emails or a tester-group alias you
                 // create in the Firebase console (e.g. "beta-testers").
                 // Replace with real emails / group before distributing.
                 testers = "bleighbande@gmail.com"
-            }
+            }*/
         }
         debug {
             // Distribute debug builds during development if needed
-            firebaseAppDistribution {
+            /*firebaseAppDistribution {
                 releaseNotesFile = "release-notes.txt"
                 testers = "bleighbande@gmail.com"
-            }
+            }*/
         }
     }
 
